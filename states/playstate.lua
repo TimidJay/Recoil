@@ -2,7 +2,8 @@ PlayState = class("PlayState")
 
 function PlayState:initialize(mode)
 	self.mode = mode or "play"
-	self.player = Player:new(config.wall_l + 40, config.floor - 50)
+	self.player = Player:new(game.gates.enter:getPos())
+	game.gates.enter:ejectPlayer(self.player)
 	self:setTileGrid()
 end
 
@@ -26,7 +27,7 @@ end
 -- 	6 1 5
 -- note that the tile in the same spot as P is ignored because
 -- the player shouldn't be that far inside a tile
--- Also, if no tile exists at that location, then it will be skipped
+-- Also, if no tile exists at that location, it will be skipped
 function PlayState:getAdjTiles(player)
 	local i, j = getGridPos(player:getPos())
 	local candidates = {}
@@ -82,26 +83,34 @@ function PlayState:update(dt)
 	--Player collision with border
 	if player.y + player.h/2 > config.floor then
 		player:setPos(nil, config.floor - player.h/2)
-		player:setVel(nil, 0)
+		if player.vy > 0 then
+			player:setVel(nil, 0)
+		end
 		player.touchingGround = true
 	end
 	if player.x - player.w/2 < config.wall_l then
 		player:setPos(config.wall_l + player.w/2, nil)
-		player:setVel(0, nil)
+		if player.vx < 0 then
+			player:setVel(0, nil)
+		end
 	end
 	if player.x + player.w/2 > config.wall_r then
 		player:setPos(config.wall_r - player.w/2, nil)
-		player:setVel(0, nil)
+		if player.vx > 0 then
+			player:setVel(0, nil)
+		end
 	end
 	if player.y - player.h/2 < config.ceil then
 		player:setPos(nil, config.ceil + player.h/2)
-		player:setVel(nil, 0)
+		if player.vy < 0 then
+			player:setVel(nil, 0)
+		end
 	end
 
 	--Player collision with tiles
 	for _, t in ipairs(self:getAdjTiles(player)) do
 		local check, dx, dy = t:checkPlayerCollision(player)
-		if check then
+		if check and player:validCollision(dx, dy) then
 			if dx ~= 0 then
 				player:setPos(player.x + dx, nil)
 				player:setVel(0, nil)
@@ -130,7 +139,7 @@ function PlayState:update(dt)
 		util.remove_if(game[k], function(v) return v:isDead() end, game.destructor)
 	end
 
-	--add objects from the object queue
+	--add objects from the new object queue
 	for str, new_objects in pairs(game.newObjects) do
 		local objects = game[str]
 		for k, v in ipairs(new_objects) do
@@ -149,6 +158,7 @@ function PlayState:draw()
 	rec("fill" , 0, 0, config.border_w, window.h) --left wall
 	rec("fill" , config.wall_r, 0, config.border_w, window.h) --right wall
 	love.graphics.setColor(1, 1, 1, 1)
+	
 	for _, t in ipairs(game.tiles) do
 		t:draw()
 	end
@@ -157,4 +167,9 @@ function PlayState:draw()
 	for _, p in ipairs(game.particles) do
 		p:draw()
 	end
+	for _, p in ipairs(game.projectiles) do
+		p:draw()
+	end
+	game.gates.enter:draw()
+	game.gates.exit:draw()
 end

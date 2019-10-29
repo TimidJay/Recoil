@@ -214,6 +214,9 @@ loadImage("clear_pixel", "media/clearpixel.png")
 loadImage("gun", "media/connor-schultz-asset.png")
 loadImage("brick", "media/mariobrick.png")
 loadImage("hitmarker", "media/hitmark.png")
+loadImage("bullet", "media/bullet.png")
+loadImage("bullet2", "media/bullet2.png")
+loadImage("gate", "media/gates2.png")
 
 --quads are required to be tied to an image
 --rects are just simple tables with (x, y, w, h)

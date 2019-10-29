@@ -134,6 +134,13 @@ function util.rotatePoint(cx, cy, x, y, deg)
 	return x, y
 end
 
+function util.rotatePoint2(cx, cy, x, y, rad)
+	x, y = x-cx, y-cy
+	x, y = util.rotateVec2(x, y, rad)
+	x, y = x+cx, y+cy
+	return x, y
+end
+
 --returns a new rectangle shape from hardoncollider/shapes
 --x and y denotes the center coords of the rectangle
 function util.newRectangleShape(x, y, w, h)

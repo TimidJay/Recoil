@@ -53,6 +53,28 @@ function Sprite:setColor(r, g, b, a)
 	self.color.a = a or self.color.a
 end
 
+--returns top left and bottom right coords
+function Sprite:bbox()
+	if self.shape then
+		return self.shape:bbox()
+	end
+	--if Sprite does not have a shape,
+	--it is assumed that the Sprite is a rectangle
+	local x, y, w, h = self.x, self.y, self.w, self.h
+	local x0, y0, x1, y1 = x-w/2, y-h/2, x+w/2, y+h/2
+	if self.angle ~= 0 then
+		x0, y0 = util.rotatePoint2(x, y, x0, y0, self.angle)
+		x1, y1 = util.rotatePoint2(x, y, x1, y1, self.angle)
+		if x1 < x0 then
+			x0, x1 = x1, x0
+		end
+		if y1 < y0 then
+			y0, y1 = y1, y0
+		end
+	end
+	return {x0, y0, x1, y1}
+end
+
 function Sprite:setShape(shape)
 	self:removeShape()
 	self.shape = shape
@@ -108,6 +130,11 @@ end
 function Sprite:setPos(x, y)
 	if x then self.x = x end
 	if y then self.y = y end
+	self:updateShape()
+end
+
+function Sprite:setAngle(theta)
+	self.angle = theta
 	self:updateShape()
 end
 

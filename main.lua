@@ -35,10 +35,18 @@ _G["print"] = function(...)
 	console.i(...)
 end
 
+--does not do bound checking
 function getGridPos(x, y)
 	local i = math.floor((y - config.ceil) / config.cell_h)
 	local j = math.floor((x - config.wall_l) / config.cell_w)
 	return i+1, j+1
+end
+
+--does the inverse of above function
+--returns the coords of the center the grid cell
+function getGridPosInv(i, j)
+	local cw = config.cell_w
+	return config.wall_l - cw/2 + (cw * j), config.ceil - cw/2 + (cw * i)
 end
 
 function boundCheck(i, j)
@@ -67,7 +75,6 @@ function love.textinput(t)
 	console.textinput(t)
 end
 
-
 local function executeImmediately(input)
 	local f, err = loadstring(input)
 	console.i("> "..input)
@@ -91,7 +98,7 @@ function love.load(arg)
 
 	
 	console.load(love.graphics.newFont("fonts/Inconsolata.otf", 16), true, executeImmediately)
-	console.i("With this console, you can run any lua code want!\nJust don't come crying to me if the game crashes or something.")
+	console.i("With this console, you can execute any lua code you want!")
 
 	require("game")
 	require("states/playstate")
@@ -100,6 +107,7 @@ function love.load(arg)
 	require("sprite")
 	require("player")
 	require("block")
+	require("gate")
 
 	game:initialize()
 	game:push(EditorState:new())

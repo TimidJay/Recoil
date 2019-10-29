@@ -1,4 +1,5 @@
 -- game is a SINGLETON not a class
+-- game acts like a container that stores objects between states
 
 game = {}
 
@@ -13,7 +14,7 @@ game.wallShapes = {
 
 --TODO: Change this to contain Recoil object types
 -- game.listTypes = {"balls", "bricks", "projectiles", "powerups", "callbacks", "particles", "environments", "menacers", "enemies"}
-game.listTypes = {"tiles", "particles"}
+game.listTypes = {"tiles", "projectiles", "particles"}
 
 function game:initialize()
 	self.states = {}
@@ -23,8 +24,7 @@ function game:initialize()
 		self[str] = {}
 		self.newObjects[str] = {}
 	end
-	self.player = nil
-	self.config = {}
+	self.gates = {}
 end
 
 function game:push(state)
@@ -59,9 +59,14 @@ function game:clearObjects()
 		util.clear(self[str])
 		util.clear(self.newObjects[str])
 	end
+	self.gates = {}
 end
 
 function game.destructor(obj)
-	obj:onDeath()
-	obj:destructor()
+	if obj.onDeath then
+		obj:onDeath()
+	end
+	if obj.destructor then
+		obj:destructor()
+	end
 end
