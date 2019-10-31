@@ -76,55 +76,42 @@ function PlayState:update(dt)
 		game:pop()
 	end
 
-
 	local player = self.player
 	player.touchingGround = false
-	
-	--Player collision with border
-	if player.y + player.h/2 > config.floor then
-		player:setPos(nil, config.floor - player.h/2)
-		if player.vy > 0 then
-			player:setVel(nil, 0)
-		end
-		player.touchingGround = true
-	end
-	if player.x - player.w/2 < config.wall_l then
-		player:setPos(config.wall_l + player.w/2, nil)
-		if player.vx < 0 then
-			player:setVel(0, nil)
-		end
-	end
-	if player.x + player.w/2 > config.wall_r then
-		player:setPos(config.wall_r - player.w/2, nil)
-		if player.vx > 0 then
-			player:setVel(0, nil)
-		end
-	end
-	if player.y - player.h/2 < config.ceil then
-		player:setPos(nil, config.ceil + player.h/2)
-		if player.vy < 0 then
-			player:setVel(nil, 0)
-		end
+
+	--Player collision with wall
+	local px, py = player:getPos()
+	local pw, ph = player:getDim()
+	pw, ph = pw/2, ph/2
+	local floor, lwall, rwall, ceil = config.floor, config.wall_l, config.wall_r, config.ceil
+
+	local dy = ceil - (py - ph)
+	if dy > 0 then
+		player:handleCollision(0, dy)
 	end
 
+	local dy = floor - (py + ph)
+	if dy < 0 then
+		player:handleCollision(0, dy)
+	end
+
+	local dx = lwall - (px - pw)
+	if dx > 0 then
+		player:handleCollision(dx, 0)
+	end
+
+	local dx = rwall - (px + pw)
+	if dx < 0 then
+		player:handleCollision(dx, 0)
+	end 
+	
 	--Player collision with tiles
 	for _, t in ipairs(self:getAdjTiles(player)) do
 		local check, dx, dy = t:checkPlayerCollision(player)
 		if check and player:validCollision(dx, dy) then
-			if dx ~= 0 then
-				player:setPos(player.x + dx, nil)
-				player:setVel(0, nil)
-			else
-				player:setPos(nil, player.y + dy)
-				player:setVel(nil, 0)
-				if dy < 0 then
-					player.touchingGround = true
-				end
-			end
+			player:handleCollision(dx, dy)
 		end
 	end
-
-
 
 	--update each object
 	self.player:update(dt)

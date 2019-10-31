@@ -42,6 +42,21 @@ function Player:validCollision(dx, dy)
 	return self.vy < 0
 end
 
+--moves the player based on the separating vector
+--also sets the player horizontal/vertical velocity to 0
+--also checks whether or not the player is colliding with the ground
+function Player:handleCollision(dx, dy)
+	self:setPos(self.x + dx, self.y + dy)
+	if dx ~= 0 then
+		self:setVel(0, nil)
+	else
+		self:setVel(nil, 0)
+	end
+	if dy < 0 then
+		self.touchingGround = true
+	end
+end
+
 function Player:update(dt)
 
 	if self.gun:canFire() then
