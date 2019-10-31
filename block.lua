@@ -21,38 +21,5 @@ end
 --check if player and block intersects
 --also returns horizontal and vertical separation vectors
 function Block:checkPlayerCollision(player)
-	local px, py, pw, ph = player.x, player.y, player.w/2, player.h/2
-	local tx, ty, tw, th = self.x, self.y, self.w/2, self.h/2
-	--left, right, up, down
-	local pl, pr, pu, pd = px - pw, px + pw, py - ph, py + ph
-	local tl, tr, tu, td = tx - tw, tx + tw, ty - th, ty + th
-
-	local dx, dy = nil, nil
-	if px > tx then
-		--dx should be positive if overlapping
-		dx = tr - pl
-		if dx <= 0 then return false end
-	else
-		--dx should be negative if overlapping
-		dx = tl - pr
-		if dx >= 0 then return false end
-	end
-
-	if py > ty then
-		--dy should be positive if overlapping
-		dy = td - pu
-		if dy <= 0 then return false end
-	else
-		--dy should be negative if overlapping
-		dy = tu - pd
-		if dy >= 0 then return false end
-	end
-
-	--since they are overlapping, we need to shift player horizontally or vertically
-	--we should use the lowest magnitude since it best reflects which direction the player hit the block
-	if math.abs(dx) < math.abs(dy) then
-		return true, dx, 0
-	else
-		return true, 0, dy
-	end
+	return self:checkSpriteCollision(player)
 end

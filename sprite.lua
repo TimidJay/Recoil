@@ -54,8 +54,10 @@ function Sprite:setColor(r, g, b, a)
 end
 
 --returns top left and bottom right coords
-function Sprite:bbox()
-	if self.shape then
+--if you want to put them in the table, put {} around it
+--noshape ignores the sprite's shape
+function Sprite:bbox(noshape)
+	if not noshape and self.shape then
 		return self.shape:bbox()
 	end
 	--if Sprite does not have a shape,
@@ -72,7 +74,48 @@ function Sprite:bbox()
 			y0, y1 = y1, y0
 		end
 	end
-	return {x0, y0, x1, y1}
+	return x0, y0, x1, y1
+end
+
+--checks if two sprites collide.
+--returns true or false as well as the separation vector.
+--assumes that the two sprites are rectangles.
+--does NOT use shapes for collision checking.
+function Sprite:checkSpriteCollision(other)
+	local ax, ay = self:getPos()
+	local bx, by = other:getPos()
+	--left, up, right, down
+	local al, au, ar, ad = self:bbox(true)
+	local bl, bu, br, bd = other:bbox(true)
+
+	local dx, dy = nil, nil
+	if bx > ax then
+		--dx should be positive if overlapping
+		dx = ar - bl
+		if dx <= 0 then return false end
+	else
+		--dx should be negative if overlapping
+		dx = al - br
+		if dx >= 0 then return false end
+	end
+
+	if by > ay then
+		--dy should be positive if overlapping
+		dy = ad - bu
+		if dy <= 0 then return false end
+	else
+		--dy should be negative if overlapping
+		dy = au - bd
+		if dy >= 0 then return false end
+	end
+
+	--since they are overlapping, we need to shift player horizontally or vertically
+	--we should use the lowest magnitude since it best reflects which direction the player hit the block
+	if math.abs(dx) < math.abs(dy) then
+		return true, dx, 0
+	else
+		return true, 0, dy
+	end
 end
 
 function Sprite:setShape(shape)

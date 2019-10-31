@@ -20,7 +20,7 @@ end
 function Gate:activate()
 end
 
---places the player behind the game
+--places the player behind the gate
 --also makes the player fly out of the gate
 function Gate:ejectPlayer(player)
 	player:setPos(self:getPos())
@@ -55,7 +55,7 @@ end
 
 --editor function
 function Gate:containMouse()
-	local bbox = self:bbox()
+	local bbox = {self:bbox()}
 	return util.containPoint(bbox, mouse.x, mouse.y)
 end
 
