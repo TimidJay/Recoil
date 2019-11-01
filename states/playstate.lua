@@ -7,6 +7,9 @@ function PlayState:initialize(mode)
 	self:setTileGrid()
 end
 
+function PlayState:close()
+end
+
 --initializes tile grid for collision detection
 --should be called after the tiles are constructed
 function PlayState:setTileGrid()
@@ -86,22 +89,22 @@ function PlayState:update(dt)
 	local floor, lwall, rwall, ceil = config.floor, config.wall_l, config.wall_r, config.ceil
 
 	local dy = ceil - (py - ph)
-	if dy > 0 then
+	if dy > 0 and player:validCollision(0, dy) then
 		player:handleCollision(0, dy)
 	end
 
 	local dy = floor - (py + ph)
-	if dy < 0 then
+	if dy < 0 and player:validCollision(0, dy) then
 		player:handleCollision(0, dy)
 	end
 
 	local dx = lwall - (px - pw)
-	if dx > 0 then
+	if dx > 0 and player:validCollision(dx, 0) then
 		player:handleCollision(dx, 0)
 	end
 
 	local dx = rwall - (px + pw)
-	if dx < 0 then
+	if dx < 0 and player:validCollision(dx, 0) then
 		player:handleCollision(dx, 0)
 	end 
 	
@@ -113,12 +116,24 @@ function PlayState:update(dt)
 		end
 	end
 
+	--Player collision with gates
+	for _, gate in pairs(game.gates) do
+		local check, dx, dy = gate:checkPlayerCollision(player)
+		if check and player:validCollision(dx, dy) then
+			player:handleCollision(dx, dy)
+		end
+	end
+
 	--update each object
 	self.player:update(dt)
 	for _, k in pairs(game.listTypes) do
 		for _, v in pairs(game[k]) do
 			v:update(dt)
 		end
+	end
+
+	for _, gate in pairs(game.gates) do
+		gate:update(dt)
 	end
 
 	--remove dead objects

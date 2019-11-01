@@ -195,6 +195,8 @@ function EditorState:startTest()
 
 	game.gates.enter = self.gates.enter
 	game.gates.exit = self.gates.exit
+	game.gates.enter:activate()
+	game.gates.exit:activate()
 
 	game:push(PlayState:new("test"))
 end

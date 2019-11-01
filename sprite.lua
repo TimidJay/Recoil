@@ -54,7 +54,7 @@ function Sprite:setColor(r, g, b, a)
 end
 
 --returns top left and bottom right coords
---if you want to put them in the table, put {} around it
+--if you want to put them in the table, put {} around it.
 --noshape ignores the sprite's shape
 function Sprite:bbox(noshape)
 	if not noshape and self.shape then

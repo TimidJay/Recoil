@@ -1,16 +1,24 @@
 Gate = class("Gate", Sprite)
 
 --Gate has 2 types: enter and exit
---type() is a builtin function so don't use it
 --Gates are initially unactivated for use in EditorState
+--Gate consists of 3 sprites, left, middle, right
 function Gate:initialize(gateType, i, j, dir, activate)
 	self.type = gateType
 	local y = self.type == "enter" and 0 or 15
-	Sprite.initialize(self, "gate", make_rect(0, y, 75, 15), config.cell_w*5, config.cell_w)
+	local cell_w = config.cell_w
+	-- Sprite.initialize(self, "gate", make_rect(0, y, 75, 15), config.cell_w*5, config.cell_w)
+	Sprite.initialize(self, nil, nil, cell_w*5, cell_w)
+	self.left = Sprite:new("gate", make_rect(0, y, 15, 15), cell_w, cell_w)
+	self.middle = Sprite:new("gate", make_rect(15, y, 45, 15), cell_w*3, cell_w)
+	self.right = Sprite:new("gate", make_rect(60, y, 15, 15), cell_w, cell_w)
+	self.offset = cell_w*2
+	self.dir = "down"
+
 	self.i, self.j = i, j
 	self:setPos(getGridPosInv(i, j))
 	self:setDirection(dir)
-	self.state = "open"
+	self.state = "closed"
 
 	if activate then
 		self:activate()
@@ -18,6 +26,43 @@ function Gate:initialize(gateType, i, j, dir, activate)
 end
 
 function Gate:activate()
+	if self.type == "enter" then
+		self.state = "open"
+		self.timer = 0.2
+	else --type == "exit"
+		self.state = "open"
+	end
+end
+
+function Gate:reset()
+	self.state = "closed"
+	self.timer = nil
+end
+
+--update the three parts of the gate
+function Gate:updateComponents()
+	local x, y = self:getPos()
+	local off = self.offset
+
+	local dirtable = {
+		up = {-1, 0},
+		down = {1, 0},
+		left = {0, -1},
+		right = {0, 1}
+	}
+	local t = dirtable[self.dir]
+	self.left:setPos(x - t[1]*off, y - t[2]*off)
+	self.middle:setPos(x, y)
+	self.right:setPos(x + t[1]*off, y + t[2]*off)
+
+	self.left:setAngle(self.angle)
+	self.middle:setAngle(self.angle)
+	self.right:setAngle(self.angle)
+end
+
+function Gate:setPos(x, y)
+	Sprite.setPos(self, x, y)
+	self:updateComponents()
 end
 
 --places the player behind the gate
@@ -32,25 +77,46 @@ function Gate:ejectPlayer(player)
 	}
 	local v = vtable[self.dir]
 	player:setVel(v[1], v[2])
+	player:setHelpless(0.2)
 end
 
 function Gate:checkPlayerCollision(player)
+	if self.state == "open" then
+		local check, dx, dy = self.left:checkSpriteCollision(player)
+		if check then
+			return true, dx, dy
+		end
+		check, dx, dy = self.right:checkSpriteCollision(player)
+		if check then
+			return true, dx, dy
+		end
+		return false
+	else
+		--the player can just collide with the big rectangle if the gate is closed
+		local check, dx, dy = self:checkSpriteCollision(player)
+		if check then
+			return true, dx, dy
+		end
+		return false
+	end
+end
+
+function Gate:update(dt)
+	if self.timer then
+		self.timer = self.timer - dt
+		if self.timer <= 0 then
+			self.timer = nil
+			self.state = "closed"
+		end
+	end
 end
 
 function Gate:draw()
-	Sprite.draw(self)
-	if self.state == "open" then
-		local cw = config.cell_w
-		local x, y = self.x, self.y
-		local dx, dy = -3*cw/2, -cw/2
-		local w, h = cw*3, cw
-		if self.dir == "left" or self.dir == "right" then
-			dx, dy = dy, dx
-			w, h = h, w
-		end
-		love.graphics.setColor(0, 0, 0, 1)
-		love.graphics.rectangle("fill", x+dx, y+dy, w, h)
+	self.left:draw()
+	if self.state ~= "open" then
+		self.middle:draw()
 	end
+	self.right:draw()
 end
 
 --editor function
@@ -90,4 +156,5 @@ function Gate:setDirection(dir)
 	elseif dir == "right" then
 		self:setAngle(-math.pi/2)
 	end
+	self:updateComponents()
 end
