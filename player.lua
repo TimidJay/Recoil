@@ -4,22 +4,28 @@ Player = class("Player", Sprite)
 --respawn the player (restart the level) in order for the change to take effect
 Player.gravity = 4000
 
-Player.recoil = 1500
+Player.recoil = 2000 --also temporarily raises the player's speed limit
 Player.default_helpless = 0.25 --period of time where player can't move on its own after firing gun
 Player.fire_delay = 0.25 --time between shots
 Player.jump_spd = 800
-Player.move_accel = 6000 --when the player manually moves left or right
-Player.air_mult = 0.5 --multiplier for air movement (the player's air control should be weaker than on ground)
+Player.move_accel = 5000 --when the player manually moves left or right
+Player.air_mult = 0.75 --multiplier for air movement (the player's air control should be weaker than on ground)
 Player.move_spd_max = 400 --how fast the player can move horizontally
 Player.friction = 3000 --how fast the player slows down on the ground
+
+Player.enable_speed_limit = true
+Player.speed_limit = 1000 --maximum speed limit for player movement
+Player.speed_limit_decay = 10000 --how fast the speed limit reverts to max_speed_limit
+Player.speed_limit_decay_delay = 0.05 --how much time before the increased speed limit starts decaying
+Player.speed_limit_instant_decay = false --if true then, speed limit reverts instantly after decay delay (ignores the decay value)
 
 function Player:initialize(x, y)
 	Sprite.initialize(self, "white_pixel", nil, 20, 40, x or 0, y or 0)
 	self.ay = Player.gravity
+	self.speedLimit = Player.speed_limit
 	self.touchingGround = false
 	self.helpless = false
 	self.gun = Gun:new(self)
-	
 end
 
 function Player:setHelpless(time)
@@ -69,6 +75,8 @@ function Player:update(dt)
 		local spd = Player.recoil
 		self:setVel(-dx*spd, -dy*spd)
 		self:setHelpless()
+		self.speedLimit = Player.recoil
+		self.speedLimitDelay = Player.speed_limit_decay_delay
 	end
 
 	keyleft = love.keyboard.isDown("a")
@@ -106,6 +114,32 @@ function Player:update(dt)
 		vx = math.max(vx - Player.friction*dt, 0)
 		self.vx = vx * sign
 	end
+
+	--speed limit stuff
+	if Player.enable_speed_limit then
+		if self.speedLimitDelay then
+			self.speedLimitDelay = self.speedLimitDelay - dt
+			if self.speedLimitDelay <= 0 then
+				self.speedLimitDelay = nil
+			end
+		else
+			if self.speedLimit > Player.speed_limit then
+				if Player.speed_limit_instant_decay then
+					self.speedLimit = Player.speed_limit
+				else
+					self.speedLimit = math.max(
+						Player.speed_limit,
+						self.speedLimit - Player.speed_limit_decay * dt
+					)
+				end
+			end
+		end
+		local spd = self:getSpeed()
+		if spd > self.speedLimit then
+			self:scaleVelToSpeed(self.speedLimit)
+		end
+	end
+	self.ay = Player.gravity --debugging
 
 	Sprite.update(self, dt)
 	self.gun:update(dt)
