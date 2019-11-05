@@ -5,7 +5,7 @@ Block = class("DeathBlock", Sprite)
 --NOTE: Block takes grid coordinates i, j instead of pixel coords x, y
 --Unlike other objects, Blocks and other tiles should remain static and grid-aligned
 function Block:initialize(i, j)
-	local imgstr = "brick"
+	local imgstr = "death_brick"
 	local rect = nil
 	local x = config.wall_l + (j-0.5)*config.cell_w
 	local y = config.ceil + (i-0.5)*config.cell_h
