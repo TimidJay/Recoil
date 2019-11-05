@@ -1,10 +1,10 @@
-Block = class("DeathBlock", Sprite)
+DeathBlock = class("DeathBlock", Sprite)
 
 --Block is a standard solid tile that does nothing
 
 --NOTE: Block takes grid coordinates i, j instead of pixel coords x, y
 --Unlike other objects, Blocks and other tiles should remain static and grid-aligned
-function Block:initialize(i, j)
+function DeathBlock:initialize(i, j)
 	local imgstr = "death_brick"
 	local rect = nil
 	local x = config.wall_l + (j-0.5)*config.cell_w
@@ -20,7 +20,7 @@ end
 
 --check if player and block intersects
 --also returns horizontal and vertical separation vectors
-function Block:checkPlayerCollision(player)
+function DeathBlock:checkPlayerCollision(player)
 	player.dead = true
 	return self:checkSpriteCollision(player)
 end

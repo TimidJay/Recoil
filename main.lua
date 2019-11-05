@@ -108,6 +108,7 @@ function love.load(arg)
 	require("player")
 	require("block")
 	require("gate")
+	require("death_block")
 
 	game:initialize()
 	game:push(EditorState:new())
