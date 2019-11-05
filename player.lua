@@ -187,6 +187,8 @@ function Gun:canFire()
 end
 
 function Gun:fire()
+	self.cooldown = Player.fire_delay
+
 	local mp = self.muzzlePoint
 	local dx, dy = mouse.x - mp.x, mouse.y - mp.y
 	dx, dy = util.normalize(dx, dy)
@@ -194,7 +196,8 @@ function Gun:fire()
 		dx, dy = -dx, -dy
 	end
 
-	--do the raycast
+	--get all the collision shapes first
+	--could make a function out of this
 	local tmin = math.huge
 	local shapes = {}
 	for _, block in ipairs(game.tiles) do
@@ -203,6 +206,28 @@ function Gun:fire()
 	for k, shape in pairs(game.wallShapes) do
 		table.insert(shapes, shape)
 	end
+	for _, gate in pairs(game.gates) do
+		for _, s in ipairs(gate:getShapes()) do
+			table.insert(shapes, s)
+		end
+	end
+
+	--check for obstruction
+	--obstruction occurs when there is an object in between the player's center and muzzle point.
+	--if there is an obstruction, then the gun is most likely stuck inside the wall, so it should not fire.
+	local obstructed = false
+	local px, py = self.player:getPos()
+	for _, shape in ipairs(shapes) do
+		local check, t = shape:intersectsRay(px, py, mp.x - px, mp.y - py)
+		if check and t > 0 and t < 1 then
+			obstructed = true
+			break
+		end
+	end
+
+	if obstructed then return end
+
+	--do the raycast
 	for _, shape in ipairs(shapes) do
 		local check, t = shape:intersectsRay(mp.x, mp.y, dx, dy)
 		if check and t > 0 then
@@ -224,7 +249,13 @@ function Gun:fire()
 	end
 	game:emplace("particles", hit)
 
-	--this bullet is a particle effect since the real bullet is a raycast
+	--fire the bullet particle effect
+	self:fireBullet(dx, dy, tmin)
+end
+
+--fire a menacing yet harmless bullet
+function Gun:fireBullet(dx, dy, t)
+	local mp = self.muzzlePoint
 	local bullet = {
 		x0 = mp.x,
 		y0 = mp.y,
@@ -232,7 +263,7 @@ function Gun:fire()
 		dy = dy,
 		t0 = 0,
 		t1 = 0,
-		tmax = tmin,
+		tmax = t,
 		phase = 0,
 		width = 3,
 		color = {1, 1, 0, 1}
@@ -272,9 +303,6 @@ function Gun:fire()
 		)
 	end
 	game:emplace("particles", bullet)
-
-
-	self.cooldown = Player.fire_delay
 end
 
 --maybe move some update functions here

@@ -73,10 +73,32 @@ end
 -- 2. update movement
 -- 3. add the new objects into the game
 
+use_keyboard_controls = false --debug
+
 function PlayState:update(dt)
 	if self.mode == "test" and keys.escape then
 		game:clearObjects()
 		game:pop()
+	end
+
+	if use_keyboard_controls then
+		local x, y = 0, 0
+		if love.keyboard.isDown("left") then x = -1 end
+		if love.keyboard.isDown("right") then x = 1 end
+		if love.keyboard.isDown("up") then y = -1 end
+		if love.keyboard.isDown("down") then y = 1 end
+
+		if x == 0 and y == 0 then
+			x, y = 0, 1
+		end
+
+		local d = 100
+		local px, py = self.player:getPos()
+		mouse.x, mouse.y = px + x*d, py + y*d
+
+		if keys.lshift then
+			mouse.m1 = 1
+		end
 	end
 
 	local player = self.player

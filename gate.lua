@@ -12,6 +12,11 @@ function Gate:initialize(gateType, i, j, dir, activate)
 	self.left = Sprite:new("gate", make_rect(0, y, 15, 15), cell_w, cell_w)
 	self.middle = Sprite:new("gate", make_rect(15, y, 45, 15), cell_w*3, cell_w)
 	self.right = Sprite:new("gate", make_rect(60, y, 15, 15), cell_w, cell_w)
+
+	self:setShape(util.newRectangleShape(0, 0, cell_w*5, cell_w))
+	self.left:setShape(util.newRectangleShape(0, 0, cell_w, cell_w))
+	self.right:setShape(util.newRectangleShape(0, 0, cell_w, cell_w))
+
 	self.offset = cell_w*2
 	self.dir = "down"
 
@@ -37,6 +42,15 @@ end
 function Gate:reset()
 	self.state = "closed"
 	self.timer = nil
+end
+
+--for raycasting and collision
+function Gate:getShapes()
+	if self.state == "open" then
+		return {self.left.shape, self.right.shape}
+	else
+		return {self.shape}
+	end
 end
 
 --update the three parts of the gate
