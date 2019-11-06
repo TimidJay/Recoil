@@ -8,6 +8,8 @@ EditorState = class("EditorState")
 tool = "fillrect"
 
 function EditorState:initialize()
+	editorstate = self
+
 	--grid starts at the top-left corner
 	self.grid = {}
 	self.allNodes = {} --allows for easy iteration across all nodes
@@ -33,6 +35,10 @@ function EditorState:initialize()
 	self.exitGate = Gate:new("exit", 22, config.grid_w, "right", false)
 
 	self:setOverlap()
+end
+
+function EditorState:close()
+	editorstate = nil
 end
 
 --sets overlap grid for non-tile objects such as gates

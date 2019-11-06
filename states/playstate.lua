@@ -1,6 +1,8 @@
 PlayState = class("PlayState")
 
 function PlayState:initialize(mode)
+	playstate = self
+
 	self.mode = mode or "play"
 	self.player = Player:new(game.gates.enter:getPos())
 	game.gates.enter:ejectPlayer(self.player)
@@ -8,6 +10,7 @@ function PlayState:initialize(mode)
 end
 
 function PlayState:close()
+	playstate = nil
 end
 
 --initializes tile grid for collision detection

@@ -276,6 +276,7 @@ function console.keypressed(key)
 			if key == console._KEY_UP then
 				console.historyPosition = math.min(math.max(console.historyPosition - 1, 1), #console.history)
 				console.input = console.history[console.historyPosition]
+				console.cursor = #console.input --move cursor to the end
 			elseif key == console._KEY_DOWN then
 				local pushing = console.historyPosition + 1 > #console.history + 1
 				console.historyPosition = math.min(console.historyPosition + 1, #console.history + 1)
@@ -283,6 +284,7 @@ function console.keypressed(key)
 				if pushing then
 					console.input = ""
 				end
+				console.cursor = #console.input --move cursor to the end
 			end
 		end
 		
