@@ -142,8 +142,11 @@ function util.rotatePoint2(cx, cy, x, y, rad)
 end
 
 --returns a new rectangle shape from hardoncollider/shapes
---x and y denotes the center coords of the rectangle
-function util.newRectangleShape(x, y, w, h)
+--x and y denotes top left corner of the retangle
+--x and y are optional because the shape most likely be moved to the sprite after creation
+function util.newRectangleShape(w, h, x, y)
+	x = x or 0
+	y = y or 0
 	local x0, y0 = x, y
 	local x1, y1 = x+w, y+h
 	return shapes.newPolygonShape(x0,y0, x0,y1, x1,y1, x1,y0)

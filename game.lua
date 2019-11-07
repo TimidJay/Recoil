@@ -5,11 +5,18 @@ game = {}
 
 --these shapes will be used for raycasting
 --maybe turn these into complete sprites later on
-game.wallShapes = {
-	lwall   = util.newRectangleShape(0            , 0           , config.border_w, window.h),
-	rwall   = util.newRectangleShape(config.wall_r, 0           , config.border_w, window.h),
-	ceiling = util.newRectangleShape(0            , 0           , window.w       , config.border_w),
-	floor   = util.newRectangleShape(0            , config.floor, window.w       , config.border_w)
+-- game.wallShapes = {
+-- 	lwall   = util.newRectangleShape(config.border_w, window.h       , 0            , 0           ),
+-- 	rwall   = util.newRectangleShape(config.border_w, window.h       , config.wall_r, 0           ),
+-- 	ceiling = util.newRectangleShape(window.w       , config.border_w, 0            , 0           ),
+-- 	floor   = util.newRectangleShape(window.w       , config.border_w, 0            , config.floor)
+-- }
+
+game.walls = {
+	left = Wall:new("left"),
+	right = Wall:new("right"),
+	up = Wall:new("up"),
+	down = Wall:new("down")
 }
 
 --TODO: Change this to contain Recoil object types

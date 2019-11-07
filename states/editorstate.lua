@@ -208,12 +208,16 @@ function EditorState:startTest()
 end
 
 function EditorState:draw()
-	love.graphics.setColor(0.5, 0.5, 0.5, 1)
-	local rec = love.graphics.rectangle
-	rec("fill" , 0, config.floor, window.w, config.border_w) --floor
-	rec("fill" , 0, 0, window.w, config.border_w) --ceiling
-	rec("fill" , 0, 0, config.border_w, window.h) --left wall
-	rec("fill" , config.wall_r, 0, config.border_w, window.h) --right wall
+	-- love.graphics.setColor(0.5, 0.5, 0.5, 1)
+	-- local rec = love.graphics.rectangle
+	-- rec("fill" , 0, config.floor, window.w, config.border_w) --floor
+	-- rec("fill" , 0, 0, window.w, config.border_w) --ceiling
+	-- rec("fill" , 0, 0, config.border_w, window.h) --left wall
+	-- rec("fill" , config.wall_r, 0, config.border_w, window.h) --right wall
+
+	for _, w in pairs(game.walls) do
+		w:draw()
+	end
 
 	--draw gridlines
 	love.graphics.setColor(0, 0, 0, 1)

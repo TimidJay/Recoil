@@ -2,22 +2,30 @@ Player = class("Player", Sprite)
 
 --if you want to modify the player's gravity in-game, you have to
 --respawn the player (restart the level) in order for the change to take effect
-Player.gravity = 4000
+Player.gravity = 5000
 
-Player.recoil = 2000 --also temporarily raises the player's speed limit
+Player.recoil = 2500 --also temporarily raises the player's speed limit
 Player.default_helpless = 0.25 --period of time where player can't move on its own after firing gun
 Player.fire_delay = 0.25 --time between shots
-Player.jump_spd = 800
+Player.jump_spd = 900
 Player.move_accel = 5000 --when the player manually moves left or right
 Player.air_mult = 0.75 --multiplier for air movement (the player's air control should be weaker than on ground)
 Player.move_spd_max = 400 --how fast the player can move horizontally
 Player.friction = 3000 --how fast the player slows down on the ground
 
-Player.enable_speed_limit = true
+Player.enable_speed_limit = 2 
+
+--mode 1
 Player.speed_limit = 1000 --maximum speed limit for player movement
 Player.speed_limit_decay = 10000 --how fast the speed limit reverts to max_speed_limit
 Player.speed_limit_decay_delay = 0.05 --how much time before the increased speed limit starts decaying
 Player.speed_limit_instant_decay = false --if true then, speed limit reverts instantly after decay delay (ignores the decay value)
+
+--mode 2
+Player.speed_limit_x = 1200
+Player.speed_limit_decay_x = 6000
+Player.speed_limit_y = 1200
+Player.speed_limit_decay_y = 6000
 
 function Player:initialize(x, y)
 	Sprite.initialize(self, "white_pixel", nil, 20, 40, x or 0, y or 0)
@@ -116,7 +124,7 @@ function Player:update(dt)
 	end
 
 	--speed limit stuff
-	if Player.enable_speed_limit then
+	if Player.enable_speed_limit == 1 then
 		if self.speedLimitDelay then
 			self.speedLimitDelay = self.speedLimitDelay - dt
 			if self.speedLimitDelay <= 0 then
@@ -137,6 +145,23 @@ function Player:update(dt)
 		local spd = self:getSpeed()
 		if spd > self.speedLimit then
 			self:scaleVelToSpeed(self.speedLimit)
+		end
+
+	elseif Player.enable_speed_limit == 2 then
+		--Alternative speed limit
+		local limx = Player.speed_limit_x
+		local limy = Player.speed_limit_y
+		local decayx = Player.speed_limit_decay_x
+		local decayy = Player.speed_limit_decay_y
+		local sx = self.vx < 0 and -1 or 1
+		local sy = self.vy < 0 and -1 or 1
+		local vx = math.abs(self.vx)
+		local vy = math.abs(self.vy)
+		if vx > limx then
+			self.vx = sx * math.max(vx - decayx*dt, limx)
+		end
+		if vy > limy then
+			self.vy = sy * math.max(vy - decayy*dt, limy)
 		end
 	end
 	self.ay = Player.gravity --debugging
@@ -203,8 +228,8 @@ function Gun:fire()
 	for _, block in ipairs(game.tiles) do
 		table.insert(shapes, block.shape)
 	end
-	for k, shape in pairs(game.wallShapes) do
-		table.insert(shapes, shape)
+	for _, w in pairs(game.walls) do
+		table.insert(shapes, w.shape)
 	end
 	for _, gate in pairs(game.gates) do
 		for _, s in ipairs(gate:getShapes()) do

@@ -100,6 +100,7 @@ function love.load(arg)
 	console.load(love.graphics.newFont("fonts/Inconsolata.otf", 16), true, executeImmediately)
 	console.i("With this console, you can execute any lua code you want!")
 
+	require("wall")
 	require("game")
 	require("states/playstate")
 	require("states/editorstate")

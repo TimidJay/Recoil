@@ -13,7 +13,7 @@ function DeathBlock:initialize(i, j)
 	self.i, self.j = i, j
 	--the initial position of this shape won't matter
 	--because it will immediately be moved to the sprite
-	local shape = util.newRectangleShape(0, 0, 30, 30)
+	local shape = util.newRectangleShape(30, 30)
 	self:setShape(shape)
 end
 
