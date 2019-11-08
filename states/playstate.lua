@@ -3,6 +3,8 @@ PlayState = class("PlayState")
 function PlayState:initialize(mode)
 	playstate = self
 
+	self.className = "PlayState"
+
 	self.mode = mode or "play"
 	self.player = Player:new(game.gates.enter:getPos())
 	game.gates.enter:ejectPlayer(self.player)

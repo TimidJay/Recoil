@@ -40,8 +40,35 @@ function Wall:initialize(dir)
 	self.w = t.w
 	self.h = t.h
 
+	self.holes = {}
+	if dir == "up" or dir == "down" then
+		for i = 1, config.grid_w do
+			self.holes[i] = false
+		end
+	else
+		for i = 1, config.grid_h do
+			self.holes[i] = false
+		end
+	end
+
 	self.shape = util.newRectangleShape(t.w, t.h, t.x, t.y)
-	
+end
+
+--based on the wall's direction, either i or j will be ignored
+function Wall:addHole(i, j)
+	if self.dir == "up" or self.dir == "down" then
+		self.holes[j] = true
+	else
+		self.holes[i] = true
+	end
+end
+
+function Wall:removeHole(i, j)
+	if self.dir == "up" or self.dir == "down" then
+		self.holes[j] = false
+	else
+		self.holes[i] = false
+	end
 end
 
 function Wall:update(dt)
@@ -50,4 +77,32 @@ end
 function Wall:draw()
 	love.graphics.setColor(0.5, 0.5, 0.5, 1)
 	love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
+
+	love.graphics.setColor(0, 0, 0, 1)
+	if self.dir == "up" or self.dir == "down" then
+		for j, v in ipairs(self.holes) do
+			if v then
+				love.graphics.rectangle(
+					"fill", 
+					config.border_w + (j-1) * config.cell_w, 
+					self.y, 
+					config.cell_w, 
+					self.h
+				)
+			end
+		end
+	else
+		for i, v in ipairs(self.holes) do
+			if v then
+				love.graphics.rectangle(
+					"fill", 
+					self.x, 
+					config.border_w + (i-1) * config.cell_w, 
+					self.w, 
+					config.cell_w
+				)
+			end
+		end
+	end
+
 end

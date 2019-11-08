@@ -1,3 +1,4 @@
+loveframes = require("loveframes")
 console = require("console")
 class = require("middleclass")
 util = require("my_util")
@@ -64,11 +65,21 @@ function love.keypressed(key, code, isrepeat)
 		end
 	end
 	--print(key.." "..code.." "..(isrepeat and "repeat" or "no repeat"))
+	loveframes.keypressed(key, code, isrepeat)
+end
+
+function love.keyreleased(key)
+	loveframes.keyreleased(key)
 end
 
 function love.mousepressed(x, y, button)
 	if console.mousepressed(x, y, button) then
 	end
+	loveframes.mousepressed(x, y, button)
+end
+
+function love.mousereleased(x, y, button)
+	loveframes.mousereleased(x, y, button)
 end
 
 function love.textinput(t)
@@ -139,6 +150,8 @@ function love.update(dt)
 	for k, v in pairs(keys) do
 		keys[k] = nil
 	end
+
+	loveframes.update(dt)
 end
 
 function love.draw()
@@ -150,5 +163,6 @@ function love.draw()
 	love.graphics.setColor(0, 0, 0, 1)
 	love.graphics.print("FPS: "..tostring(love.timer.getFPS( )), 12, 12)
 
+	loveframes.draw()
 	console.draw()
 end

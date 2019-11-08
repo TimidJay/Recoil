@@ -10,6 +10,8 @@ tool = "fillrect"
 function EditorState:initialize()
 	editorstate = self
 
+	self.className = "EditorState"
+
 	--grid starts at the top-left corner
 	self.grid = {}
 	self.allNodes = {} --allows for easy iteration across all nodes
@@ -33,12 +35,33 @@ function EditorState:initialize()
 	}
 	self.entranceGate = Gate:new("enter", 22, 1, "left", false)
 	self.exitGate = Gate:new("exit", 22, config.grid_w, "right", false)
-
 	self:setOverlap()
+
+	--gui stuff
+	local frame = loveframes.Create("frame")
+	frame:SetName("Tiles")
+	frame:SetPos(window.w/2, window.h/2)
+
+	local button = loveframes.Create("button", frame)
+	button:SetPos(10, 40)
+	button.OnClick = function(obj, x, y)
+		print("Clicked "..x.." "..y)
+	end
+
+	self.frame = frame
 end
 
 function EditorState:close()
 	editorstate = nil
+end
+
+--checks if the mouse overlaps a loveframes object
+function EditorState.containMouse(obj)
+	local x, y = obj:GetPos()
+	local w, h = obj:GetSize()
+	local mx, my = mouse.x, mouse.y
+
+	return mx > x and mx < x+w and my > y and my < y+h
 end
 
 --sets overlap grid for non-tile objects such as gates
@@ -85,6 +108,8 @@ function EditorState:update(dt)
 	local mx, my = mouse.x, mouse.y
 	local mi, mj = getGridPos(mx, my)
 
+	
+
 	if keys.escape then
 
 		self:startTest()
@@ -93,6 +118,11 @@ function EditorState:update(dt)
 
 	for _, n in ipairs(self.allNodes) do
 		n.highlight = false
+	end
+
+	--don't interact with background if mouse is in a gui
+	if EditorState.containMouse(self.frame) and mouse.m1 ~= 2 then
+		return
 	end
 
 	--dragging gates around
