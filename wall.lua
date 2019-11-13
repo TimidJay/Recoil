@@ -71,6 +71,23 @@ function Wall:setHole(i, j, value)
 	end
 end
 
+--based on the wall's direction, either i or j will be ignored
+function Wall:addHole(i, j)
+	if self.dir == "up" or self.dir == "down" then
+		self.holes[j] = true
+	else
+		self.holes[i] = true
+	end
+end
+
+function Wall:removeHole(i, j)
+	if self.dir == "up" or self.dir == "down" then
+		self.holes[j] = false
+	else
+		self.holes[i] = false
+	end
+end
+
 function Wall:clearHoles()
 	for k, v in ipairs(self.holes) do
 		self.holes[k] = false
