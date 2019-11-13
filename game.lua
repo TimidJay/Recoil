@@ -12,12 +12,7 @@ game = {}
 -- 	floor   = util.newRectangleShape(window.w       , config.border_w, 0            , config.floor)
 -- }
 
-game.walls = {
-	left = Wall:new("left"),
-	right = Wall:new("right"),
-	up = Wall:new("up"),
-	down = Wall:new("down")
-}
+
 
 --TODO: Change this to contain Recoil object types
 -- game.listTypes = {"balls", "bricks", "projectiles", "powerups", "callbacks", "particles", "environments", "menacers", "enemies"}
@@ -32,16 +27,25 @@ function game:initialize()
 		self.newObjects[str] = {}
 	end
 	self.gates = {}
+	self.walls = {
+		left = Wall:new("left"),
+		right = Wall:new("right"),
+		up = Wall:new("up"),
+		down = Wall:new("down")
+	}
+	self.exit = nil --{dir = "left", coords = {i = 10, j = 0}}
 end
 
 function game:push(state)
 	table.insert(self.states, state)
+	loveframes.SetState(state.className)
 end
 
 function game:pop()
 	local top = self:top()
 	if top.close then top:close() end
 	self.states[#self.states] = nil
+	loveframes.SetState(self:top().className)
 end
 
 function game:top()
@@ -70,6 +74,10 @@ function game:clearObjects()
 		gate:reset()
 		self.gates[k] = nil
 	end
+	for k, wall in pairs(self.walls) do
+		wall:reset()
+	end
+	self.exit = nil
 end
 
 function game.destructor(obj)

@@ -3,7 +3,10 @@ PlayState = class("PlayState")
 function PlayState:initialize(mode)
 	playstate = self
 
+	self.className = "PlayState"
+
 	self.mode = mode or "play"
+	self.state = "playing" --playing, death, victory
 	self.player = Player:new(game.gates.enter:getPos())
 	game.gates.enter:ejectPlayer(self.player)
 	self:setTileGrid()
@@ -79,6 +82,8 @@ end
 use_keyboard_controls = false --debug
 
 function PlayState:update(dt)
+	local player = self.player
+
 	if self.mode == "test" and keys.escape then
 		game:clearObjects()
 		game:pop()
@@ -104,39 +109,75 @@ function PlayState:update(dt)
 		end
 	end
 
-	local player = self.player
+
+
+	if self.state == "death" or self.state == "victory" then
+		return
+	end
+
+	--temporary
+	if player.dead then
+		self.state = "death"
+	end
+
+	--Player out of bounds check
+	local px, py = player:getPos()
+	local pw, ph = player:getDim()
+	local pvx, pvy = player:getVel()
+	pw, ph = pw/2, ph/2
+
+	if px+pw < 0 or px-pw > window.w or py+ph < 0 or py-ph > window.h then
+		self.state = "death"
+	end
+
+	local check, dir = false, nil
+	if px+pw < 0 and pvx < 0 then
+		check = true
+		dir = "left"
+	elseif px-pw > window.w and pvx > 0 then
+		check = true
+		dir = "right"
+	elseif py+ph < 0 and pvy < 0 then
+		check = true
+		dir = "up"
+	elseif py-ph > window.h and pvy > 0 then
+		check = true
+		dir = "down"
+	end
+
+	if check then
+		self.state = "death"
+		if dir == game.exit.dir then
+			local pi, pj = getGridPos(px, py)
+			local coords = game.exit.coords
+			if dir == "up" or dir == "down" then
+				if pj >= coords[1][2] and pj <= coords[3][2] then
+					self.state = "victory"
+				end
+			else
+				if pi >= coords[1][1] and pi <= coords[3][1] then
+					self.state = "victory"
+				end
+			end
+		end
+	end
+
+	--collision stuff
 	player.touchingGround = false
 
 	--Player collision with wall
-	local px, py = player:getPos()
-	local pw, ph = player:getDim()
-	pw, ph = pw/2, ph/2
-	local floor, lwall, rwall, ceil = config.floor, config.wall_l, config.wall_r, config.ceil
-
-	local dy = ceil - (py - ph)
-	if dy > 0 and player:validCollision(0, dy) then
-		player:handleCollision(0, dy)
+	for _, wall in pairs(game.walls) do
+		local check, dx, dy = wall:checkPlayerCollision(player)
+		if check then
+			player:handleCollision(dx, dy)
+		end
 	end
-
-	local dy = floor - (py + ph)
-	if dy < 0 and player:validCollision(0, dy) then
-		player:handleCollision(0, dy)
-	end
-
-	local dx = lwall - (px - pw)
-	if dx > 0 and player:validCollision(dx, 0) then
-		player:handleCollision(dx, 0)
-	end
-
-	local dx = rwall - (px + pw)
-	if dx < 0 and player:validCollision(dx, 0) then
-		player:handleCollision(dx, 0)
-	end 
 	
 	--Player collision with tiles
 	for _, t in ipairs(self:getAdjTiles(player)) do
 		local check, dx, dy = t:checkPlayerCollision(player)
 		if check and player:validCollision(dx, dy) then
+			t:onPlayerHit(player)
 			player:handleCollision(dx, dy)
 		end
 	end
@@ -203,4 +244,10 @@ function PlayState:draw()
 	end
 	game.gates.enter:draw()
 	game.gates.exit:draw()
+
+	if self.state == "death" then
+		draw("red_x", nil, window.w/2, window.h/2)
+	elseif self.state == "victory" then
+		draw("green_check", nil, window.w/2, window.h/2)
+	end
 end

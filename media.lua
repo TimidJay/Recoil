@@ -218,6 +218,8 @@ loadImage("bullet", "media/bullet.png")
 loadImage("bullet2", "media/bullet2.png")
 loadImage("gate", "media/gates2.png")
 loadImage("death_brick", "media/dieblock.png")
+loadImage("red_x", "media/big_red_x.png")
+loadImage("green_check", "media/big_green_check.png")
 
 --quads are required to be tied to an image
 --rects are just simple tables with (x, y, w, h)

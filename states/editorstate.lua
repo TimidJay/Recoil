@@ -10,6 +10,8 @@ tool = "fillrect"
 function EditorState:initialize()
 	editorstate = self
 
+	self.className = "EditorState"
+
 	--grid starts at the top-left corner
 	self.grid = {}
 	self.allNodes = {} --allows for easy iteration across all nodes
@@ -19,9 +21,9 @@ function EditorState:initialize()
 			local node = GridNode:new(self, i, j)
 			table.insert(row, node)
 			table.insert(self.allNodes, node)
-			--place blocks all over the edges
+			--place blocks on the edges of the grid
 			if i == 1 or i == config.grid_h or j == 1 or j == config.grid_w then
-				node:setTile()
+				node:setTile("block")
 			end
 		end
 		table.insert(self.grid, row)
@@ -33,12 +35,136 @@ function EditorState:initialize()
 	}
 	self.entranceGate = Gate:new("enter", 22, 1, "left", false)
 	self.exitGate = Gate:new("exit", 22, config.grid_w, "right", false)
-
 	self:setOverlap()
+
+	--holes can be added to the bottom wall
+	self.pit = {} --work in progress
+
+	self.selectedTile = "block"
+
+	--gui stuff
+
+	local frame = loveframes.Create("frame")
+	frame:SetName("Tiles")
+	frame:ShowCloseButton(false)
+	frame:SetPos(window.w - 200, 100)
+	frame:SetWidth(120)
+	frame:SetHeight(250)
+	frame:SetState("EditorState")
+
+	local flist = loveframes.Create("list", frame)
+	flist:SetPos(10, 40)
+	flist:SetWidth(100)
+	flist:SetHeight(200)
+	flist:SetSpacing(5)
+	flist:SetPadding(5)
+
+	local tileKeys = {"block", "deathblock"}
+	for i, key in ipairs(tileKeys) do
+		local tileData = data.tiles[key]
+		button = loveframes.Create("button", frame)
+		button:SetText(tileData.editor.name)
+		button.OnClick = function(obj, x, y)
+			self.selectedTile = key
+		end
+		flist:AddItem(button)
+	end
+
+	self.frame = frame
 end
 
 function EditorState:close()
 	editorstate = nil
+end
+
+function EditorState:reset()
+	for _, n in ipairs(self.allNodes) do
+		n:clear()
+	end
+	self.pit = {}
+end
+
+--global function for easier access
+function saveLevel(filename)
+	if game:top() ~= editorstate then
+		print("Make sure you're in the Level Editor state!")
+		return
+	end
+	editorstate:saveLevel(filename)
+end
+
+function EditorState:saveLevel(filename)
+	local tableToString = util.tableToString
+	local join = util.join
+
+	local file = love.filesystem.newFile("levels/"..filename)
+	file:open("w")
+	file:write("local level = {}\n")
+
+	file:write("level.tiles = {\n")
+	for _, n in ipairs(self.allNodes) do
+		if n.tile then
+			local line = "\t{"..n.i..", "..n.j..", \""..n.tile.key.."\"},\n"
+			file:write(line)
+		end
+	end
+	file:write("}\n")
+
+	local enter, exit = self.gates.enter, self.gates.exit
+	file:write("level.gates = {\n")
+	file:write("\tenter = {"..enter.i..", "..enter.j..", \""..enter.dir.."\"},\n")
+	file:write("\texit = {"..exit.i..", "..exit.j..", \""..exit.dir.."\"},\n")
+	file:write("}\n")
+
+	--exported format is a list of keys
+	file:write("level.pit = {")
+	for j, _ in pairs(self.pit) do
+		file:write(j..", ")
+	end
+	file:write("}\n")
+
+	file:write("return level")
+	file:close()
+end
+
+function loadLevel(filename)
+	if game:top() ~= editorstate then
+		print("Make sure you're in the Level Editor state!")
+		return
+	end
+	editorstate:loadLevel(filename)
+end
+
+function EditorState:loadLevel(filename)
+	local chunk = love.filesystem.load("levels/"..filename)
+	if not chunk then
+		print("ERROR: File "..filename.." not found!")
+		return
+	end
+	self:reset()
+	local level = chunk()
+	for _, t in ipairs(level.tiles) do
+		local i, j, key = unpack(t)
+		self.grid[i][j]:setTile(key)
+	end
+	for k, gate in pairs(self.gates) do
+		local t = level.gates[k]
+		gate:setPos2(t[1], t[2])
+		gate:setDir(t[3])
+	end
+	self:setOverlap()
+	for _, v in ipairs(level.pit) do
+		self.pit[v] = true
+	end
+end
+
+--checks if the mouse overlaps a loveframes object
+function EditorState.containMouse(obj)
+	local x, y = obj:GetPos()
+	local w, h = obj:GetSize()
+	local mx, my = mouse.x, mouse.y
+
+	return mx > x and mx < x+w and my > y and my < y+h
 end
 
 --sets overlap grid for non-tile objects such as gates
@@ -85,6 +211,8 @@ function EditorState:update(dt)
 	local mx, my = mouse.x, mouse.y
 	local mi, mj = getGridPos(mx, my)
 
+	
+
 	if keys.escape then
 
 		self:startTest()
@@ -93,6 +221,11 @@ function EditorState:update(dt)
 
 	for _, n in ipairs(self.allNodes) do
 		n.highlight = false
+	end
+
+	--don't interact with background if mouse is in a gui
+	if EditorState.containMouse(self.frame) and mouse.m1 ~= 2 then
+		return
 	end
 
 	--dragging gates around
@@ -122,7 +255,7 @@ function EditorState:update(dt)
 		end
 		if self:gateValidPos(choice, self.drag) then
 			--move the gate to that location
-			gate:setPos(getGridPosInv(choice[3], choice[4]))
+			gate:setPos2(choice[3], choice[4])
 			gate:setDirection(choice[1])
 		end
 		--after dragging is done, update the overlap grid
@@ -137,7 +270,7 @@ function EditorState:update(dt)
 			node.highlight = true
 
 			if mouse.m1 then
-				node:setTile()
+				node:setTile(self.selectedTile)
 			elseif mouse.m2 then
 				node:clear()
 			end
@@ -176,7 +309,7 @@ function EditorState:update(dt)
 			elseif self.clicked then
 				for _, node in ipairs(self.selectedNodes) do
 					if self.clicked.mode == 1 then
-						node:setTile()
+						node:setTile(self.selectedTile)
 					else
 						node:clear()
 					end
@@ -185,17 +318,23 @@ function EditorState:update(dt)
 			end
 
 		end
+	--pit placement
+	elseif mi == config.grid_h + 1  and mj >= 1 and mj <= config.grid_w then
+		if mouse.m1 then
+			-- game.walls.down:setHole(mi, mj, true)
+			self.pit[mj] = true
+		elseif mouse.m2 then
+			-- game.walls.down:setHole(mi, mj, false)
+			self.pit[mj] = nil
+		end
 	end
 end
 
 -- switches the game to test mode
 function EditorState:startTest()
 	for _, n in ipairs(self.allNodes) do
-		if n.tile then
-			if not self.overlap[n.i][n.j] then
-				local block = Block:new(n.i, n.j)
-				table.insert(game.tiles, block)
-			end
+		if n.tile and not self.overlap[n.i][n.j] then
+			table.insert(game.tiles, n:makeTile())
 		end
 	end
 
@@ -203,6 +342,30 @@ function EditorState:startTest()
 	game.gates.exit = self.gates.exit
 	game.gates.enter:activate()
 	game.gates.exit:activate()
+
+	--add the holes
+	for j, v in pairs(self.pit) do
+		game.walls.down:setHole(0, j, true)
+	end
+
+	for _, gate in pairs(game.gates) do
+		local holes = gate:getOccupied(true)
+		local wall = game.walls[gate.dir]
+		for _, t in ipairs(holes) do
+			wall:setHole(t[1], t[2], true)
+		end
+	end
+
+	for _, wall in pairs(game.walls) do
+		wall:createShapes()
+	end
+
+	--set the exit point
+	local exit = self.gates.exit
+	game.exit = {
+		dir = exit.dir,
+		coords = exit:getOccupied(true)
+	}
 
 	game:push(PlayState:new("test"))
 end
@@ -243,6 +406,15 @@ function EditorState:draw()
 	for _, node in ipairs(self.allNodes) do
 		node:drawHighlight()
 	end
+
+	--draw proposed pit
+	local dwall = game.walls.down
+	local cell_w = config.cell_w
+	local border_w = config.border_w
+	love.graphics.setColor(0, 0, 0, 1)
+	for j, v in pairs(self.pit) do
+		love.graphics.rectangle("fill", border_w + (j-1) * cell_w, dwall.y, cell_w, dwall.h)
+	end
 end
 
 GridNode = class("GridNode")
@@ -258,23 +430,29 @@ function GridNode:initialize(editorstate, i, j)
 	self.highlight = false
 end
 
---currently only sets one type of tile
-function GridNode:setTile()
-	self.tile = {imgstr = "brick", rect = nil}
+function GridNode:setTile(tileKey)
+	self.tile = data.tiles[tileKey]
 end
 
 function GridNode:clear()
 	self.tile = nil
 end
 
+function GridNode:makeTile()
+	if not self.tile then return nil end
+
+	local class = self.tile.class
+	local args = self.tile.args
+	local tile = class:new(self.i, self.j, unpack(args))
+	return tile
+end
+
 function GridNode:draw()
 	if self.tile then
-		local t = self.tile
+		local t = self.tile.editor
 		love.graphics.setColor(1, 1, 1, 1)
 		draw(t.imgstr, t.rect, self.x, self.y, 0, self.w, self.h)
 	end
-
-	
 end
 
 --separated so the highlight can be drawn on top of things

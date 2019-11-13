@@ -79,6 +79,13 @@ function Gate:setPos(x, y)
 	self:updateComponents()
 end
 
+--use this one instead
+function Gate:setPos2(i, j)
+	local x, y = getGridPosInv(i, j)
+	self:setPos(x, y)
+	self.i, self.j = i, j
+end
+
 --places the player behind the gate
 --also makes the player fly out of the gate
 function Gate:ejectPlayer(player)
@@ -140,15 +147,17 @@ function Gate:containMouse()
 end
 
 --returns grid coords that are occupied by this gate
-function Gate:getOccupied()
+--if middle is true, get the middle 3 coordinates only
+function Gate:getOccupied(middle)
 	local i, j = getGridPos(self:getPos())
 	local t = {}
+	local r = middle and 1 or 2
 	if self.dir == "up" or self.dir == "down" then
-		for d = -2, 2 do
+		for d = -r, r do
 			table.insert(t, {i, j+d})
 		end
 	else
-		for d = -2, 2 do
+		for d = -r, r do
 			table.insert(t, {i+d, j})
 		end
 	end

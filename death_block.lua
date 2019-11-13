@@ -21,6 +21,9 @@ end
 --check if player and block intersects
 --also returns horizontal and vertical separation vectors
 function DeathBlock:checkPlayerCollision(player)
-	player.dead = true
 	return self:checkSpriteCollision(player)
+end
+
+function DeathBlock:onPlayerHit(player)
+	player.dead = true
 end

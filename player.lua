@@ -29,6 +29,7 @@ Player.speed_limit_decay_y = 6000
 
 function Player:initialize(x, y)
 	Sprite.initialize(self, "white_pixel", nil, 20, 40, x or 0, y or 0)
+	self:setShape(util.newRectangleShape(self.w, self.h))
 	self.ay = Player.gravity
 	self.speedLimit = Player.speed_limit
 	self.touchingGround = false
@@ -171,7 +172,9 @@ function Player:update(dt)
 end
 
 function Player:draw()
-	if self.helpless then
+	if self.dead then
+		self:setColor(0.3, 0.3, 0.3)
+	elseif self.helpless then
 		self:setColor(1, 0, 0)
 	elseif self.touchingGround then
 		self:setColor(0, 1, 0)

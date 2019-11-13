@@ -73,6 +73,13 @@ function util.tableToString(table)
 	return str
 end
 
+function util.join(lines)
+	local str = ''
+	for k, v in pairs(lines) do
+		str = str .. prefix .. v .. "\n"
+	end
+	return str
+end
 
 
 function util.cap_first_letter(str)

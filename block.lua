@@ -23,3 +23,6 @@ end
 function Block:checkPlayerCollision(player)
 	return self:checkSpriteCollision(player)
 end
+
+function Block:onPlayerHit(player)
+end
