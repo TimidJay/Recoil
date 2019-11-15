@@ -2,21 +2,21 @@ Player = class("Player", Sprite)
 
 --if you want to modify the player's gravity in-game, you have to
 --respawn the player (restart the level) in order for the change to take effect
-Player.gravity = 5000
+Player.gravity = 6000
 
-Player.recoil = 2500 --also temporarily raises the player's speed limit
+Player.recoil = 1800 --also temporarily raises the player's speed limit
 Player.default_helpless = 0.25 --period of time where player can't move on its own after firing gun
 Player.fire_delay = 0.25 --time between shots
 Player.jump_spd = 900
 Player.move_accel = 5000 --when the player manually moves left or right
-Player.air_mult = 0.75 --multiplier for air movement (the player's air control should be weaker than on ground)
+Player.air_mult = 0.25 --multiplier for air movement (the player's air control should be weaker than on ground)
 Player.move_spd_max = 400 --how fast the player can move horizontally
 Player.friction = 3000 --how fast the player slows down on the ground
 
-Player.enable_speed_limit = 2 
+Player.enable_speed_limit = 1 
 
 --mode 1
-Player.speed_limit = 1000 --maximum speed limit for player movement
+Player.speed_limit = 750 --maximum speed limit for player movement
 Player.speed_limit_decay = 10000 --how fast the speed limit reverts to max_speed_limit
 Player.speed_limit_decay_delay = 0.05 --how much time before the increased speed limit starts decaying
 Player.speed_limit_instant_decay = false --if true then, speed limit reverts instantly after decay delay (ignores the decay value)

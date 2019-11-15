@@ -89,6 +89,10 @@ function PlayState:update(dt)
 		game:pop()
 	end
 
+	if keys.k == 1 then
+		use_keyboard_controls = not use_keyboard_controls
+	end
+
 	if use_keyboard_controls then
 		local x, y = 0, 0
 		if love.keyboard.isDown("left") then x = -1 end
