@@ -215,6 +215,8 @@ function Gun:canFire()
 end
 
 function Gun:fire()
+	setScreenShake()
+
 	self.cooldown = Player.fire_delay
 
 	local mp = self.muzzlePoint

@@ -108,9 +108,11 @@ function PlayState:update(dt)
 		local px, py = self.player:getPos()
 		mouse.x, mouse.y = px + x*d, py + y*d
 
-		if keys.lshift then
-			mouse.m1 = 1
-		end
+		
+	end
+	--this is useful even for mouse controls
+	if keys.lshift then
+		mouse.m1 = 1
 	end
 
 

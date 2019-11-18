@@ -137,6 +137,24 @@ end
 
 time_scale = 1
 
+disable_screen_shake = false
+screen_shake = {}
+
+function setScreenShake()
+	if disable_screen_shake then
+		return
+	end
+
+	local ss = screen_shake
+	ss.on = true
+	ss.timer = 0.3
+	ss.maxTimer = ss.timer
+	--magnitude will decrease linearly to 0
+	ss.mag = 3
+	ss.maxMag = ss.mag
+end
+
+
 function love.update(dt)
 	console.update(dt)
 	
@@ -163,9 +181,25 @@ function love.update(dt)
 	end
 
 	loveframes.update(dt)
+
+	local ss = screen_shake
+	if ss.on then
+		ss.timer = ss.timer - dt
+		if ss.timer <= 0 then
+			ss.on = false
+		end
+		ss.mag = ss.timer / ss.maxTimer * ss.maxMag
+	end
+
 end
 
 function love.draw()
+	local ss = screen_shake
+	if ss.on then
+		local dx, dy = util.rotateVec(0, ss.mag, math.random(360))
+		love.graphics.translate(dx, dy)
+	end
+
 	love.graphics.setColor(0.8, 0.8, 0.8, 1)
 	love.graphics.rectangle("fill", 0, 0, window.w, window.h)
 	love.graphics.setColor(1, 1, 1, 1)
