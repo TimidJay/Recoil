@@ -220,6 +220,9 @@ loadImage("gate", "media/gates2.png")
 loadImage("death_brick", "media/dieblock.png")
 loadImage("red_x", "media/big_red_x.png")
 loadImage("green_check", "media/big_green_check.png")
+loadImage("shockwave", "media/recoil_shockwave.png")
+loadImage("laserblock", "media/laserblock2.png")
+loadImage("shieldblock", "media/shieldblock2.png")
 
 --quads are required to be tied to an image
 --rects are just simple tables with (x, y, w, h)
@@ -292,3 +295,25 @@ end
 -- 		table.insert(ani[str], {rects.powerup[row+1][col+1+(jj*4)], 0.05})
 -- 	end
 -- end
+
+rects.tile = {}
+for i = 1, 100 do
+	local row = {}
+	for j = 1, 100 do
+		table.insert(row, make_rect((j-1)*15, (i-1)*15, 15, 15))
+	end
+	table.insert(rects.tile, row)
+end
+
+rects.shockwave = {}
+for i = 1, 5 do
+	table.insert(rects.shockwave, make_rect(0, (i-1)*13, 39, 13))
+end
+
+for i = 1, 5 do
+	local anistr = "shockwave"..i
+	ani[anistr] = {imgstr = "shockwave"}
+	for j = i, 5 do
+		table.insert(ani[anistr], {rects.shockwave[j], 0.05})
+	end
+end

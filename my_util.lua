@@ -232,6 +232,53 @@ function util.lineStipple( x1, y1, x2, y2, dash, gap )
     end
 end
 
+
+ 
+--borrowed from https://love2d.org/wiki/Gradients
+--instructions:
+--dir is either "horizontal" or "vertical"
+--... is a list of colors, {r1, g1, b1, a1}, {r1, g1, b1, a1}, etc
+--returns a drawable pixel that can be scaled to fit any size
+local COLOR_MUL = love._version >= "11.0" and 1 or 255 --compatibility
+function util.gradientMesh(dir, ...)
+    -- Check for direction
+    local isHorizontal = true
+    if dir == "vertical" then
+        isHorizontal = false
+    elseif dir ~= "horizontal" then
+        error("bad argument #1 to 'gradient' (invalid value)", 2)
+    end
+ 
+    -- Check for colors
+    local colorLen = select("#", ...)
+    if colorLen < 2 then
+        error("color list is less than two", 2)
+    end
+ 
+    -- Generate mesh
+    local meshData = {}
+    if isHorizontal then
+        for i = 1, colorLen do
+            local color = select(i, ...)
+            local x = (i - 1) / (colorLen - 1)
+ 
+            meshData[#meshData + 1] = {x, 1, x, 1, color[1], color[2], color[3], color[4] or (1 * COLOR_MUL)}
+            meshData[#meshData + 1] = {x, 0, x, 0, color[1], color[2], color[3], color[4] or (1 * COLOR_MUL)}
+        end
+    else
+        for i = 1, colorLen do
+            local color = select(i, ...)
+            local y = (i - 1) / (colorLen - 1)
+ 
+            meshData[#meshData + 1] = {1, y, 1, y, color[1], color[2], color[3], color[4] or (1 * COLOR_MUL)}
+            meshData[#meshData + 1] = {0, y, 0, y, color[1], color[2], color[3], color[4] or (1 * COLOR_MUL)}
+        end
+    end
+ 
+    -- Resulting Mesh has 1x1 image size
+    return love.graphics.newMesh(meshData, "strip", "static")
+end
+
 Stack = class("Stack")
 
 function Stack:initialize(list)

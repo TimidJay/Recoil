@@ -2,32 +2,39 @@ Wall = class("Wall")
 --Although Wall does not inherit from Sprite,
 --it shares some of Sprite's attributes
 
+local bl = {0, 0, 0, 1} --black
+local cl = {0, 0, 0, 0} --clear
+local grad = util.gradientMesh
+
 Wall.data = {
 	left = {
 		x = 0, 
 		y = 0,
 		w = config.border_w,
-		h = window.h
+		h = window.h,
+		gr = grad("horizontal", bl, cl)
 	},
 	right = {
 		x = window.w - config.border_w,
 		y = 0,
 		w = config.border_w,
-		h = window.h
-
+		h = window.h,
+		gr = grad("horizontal", cl, bl)
 	},
 	up = {
 		x = 0,
 		y = 0,
 		w = window.w,
-		h = config.border_w
+		h = config.border_w,
+		gr = grad("vertical", bl, cl)
 
 	},
 	down = {
 		x = 0,
 		y = window.h - config.border_w,
 		w = window.w,
-		h = config.border_w
+		h = config.border_w,
+		gr = grad("vertical", cl, bl)
 	}
 }
 
@@ -40,6 +47,7 @@ function Wall:initialize(dir)
 	self.y = t.y
 	self.w = t.w
 	self.h = t.h
+	self.gr = t.gr
 
 	self.holes = {}
 	if dir == "up" or dir == "down" then
@@ -198,24 +206,38 @@ function Wall:draw()
 	love.graphics.setColor(0.5, 0.5, 0.5, 1)
 	-- love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
 
+	local gr_w = cell_w * 0.75
+
 	if self.dir == "up" or self.dir == "down" then
 		rect("fill", 0            , self.y, cell_w, self.h) --left corner
 		rect("fill", config.wall_r, self.y, cell_w, self.h) --right corner
 		for j, v in ipairs(self.holes) do
-			love.graphics.setColor(0.5, 0.5, 0.5, 1)
+			local x = border_w + (j-1) * cell_w
+			local y = self.y
+			local dy = self.dir == "up" and 0 or -gr_w
+			local dh = gr_w
 			if v then
-				love.graphics.setColor(0, 0, 0, 1)
+				love.graphics.setColor(1, 1, 1, 1)
+				love.graphics.draw(self.gr, x, y + dy, 0, cell_w, self.h + dh)
+			else
+				love.graphics.setColor(0.5, 0.5, 0.5, 1)
+				rect("fill", x, y, cell_w, self.h)
 			end
-			rect("fill", border_w + (j-1) * cell_w, self.y, cell_w, self.h)
 		end
 	else
 		--corners are already filled by up and down walls
 		for i, v in ipairs(self.holes) do
-			love.graphics.setColor(0.5, 0.5, 0.5, 1)
+			local x = self.x
+			local y = border_w + (i-1) * cell_w
+			local dx = self.dir == "left" and 0 or -gr_w
+			local dw = gr_w
 			if v then
-				love.graphics.setColor(0, 0, 0, 1)
+				love.graphics.setColor(1, 1, 1, 1)
+				love.graphics.draw(self.gr, x + dx, y, 0, self.w + dw, cell_w)
+			else
+				love.graphics.setColor(0.5, 0.5, 0.5, 1)
+				rect("fill", x, y, self.w, cell_w)
 			end
-			rect("fill", self.x, border_w + (i-1) * cell_w, self.w, cell_w)
 		end
 	end
 

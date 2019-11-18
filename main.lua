@@ -126,12 +126,16 @@ function love.load(arg)
 	require("block")
 	require("gate")
 	require("death_block")
+	require("laserblock")
+	require("shieldblock")
 
 	require("data")
 
 	game:initialize()
 	game:push(EditorState:new())
 end
+
+time_scale = 1
 
 function love.update(dt)
 	console.update(dt)
@@ -152,7 +156,7 @@ function love.update(dt)
 	end
 	mouse.x, mouse.y = love.mouse.getPosition()
 
-	game:update(dt)
+	game:update(dt*time_scale)
 
 	for k, v in pairs(keys) do
 		keys[k] = nil

@@ -229,6 +229,9 @@ function Gun:fire()
 	local tmin = math.huge
 	local shapes = {}
 	for _, block in ipairs(game.tiles) do
+		if block.shieldShape then
+			table.insert(shapes, block.shieldShape)
+		end
 		table.insert(shapes, block.shape)
 	end
 	for _, w in pairs(game.walls) do
@@ -243,6 +246,7 @@ function Gun:fire()
 	--check for obstruction
 	--obstruction occurs when there is an object in between the player's center and muzzle point.
 	--if there is an obstruction, then the gun is most likely stuck inside the wall, so it should not fire.
+	--or at least not fire a bullet
 	local obstructed = false
 	local px, py = self.player:getPos()
 	for _, shape in ipairs(shapes) do
@@ -256,15 +260,25 @@ function Gun:fire()
 	if obstructed then return end
 
 	--do the raycast
+	local hitShape = nil
 	for _, shape in ipairs(shapes) do
 		local check, t = shape:intersectsRay(mp.x, mp.y, dx, dy)
-		if check and t > 0 then
-			tmin = math.min(tmin, t)
+		if check and t > 0 and t < tmin then
+			tmin = t
+			hitShape = shape
 		end
 	end
 	local tx, ty = mp.x + dx*tmin, mp.y + dy*tmin --shot location
-
 	--the raycast should always hit something since the player is in an enclosed room
+
+	--notify object if it exists
+	local sprite = hitShape.sprite
+	if sprite then
+		if sprite.onBulletHit then
+			sprite:onBulletHit()
+		end
+	end
+
 	--debug hit marker
 	local hit = Sprite:new("hitmarker", nil, 10, 10, tx, ty)
 	hit.deathTimer = 2
@@ -283,6 +297,74 @@ end
 
 --fire a menacing yet harmless bullet
 function Gun:fireBullet(dx, dy, t)
+	local mp = self.muzzlePoint
+	local bullet = {
+		x0 = mp.x,
+		y0 = mp.y,
+		dx = dx,
+		dy = dy,
+		tmax = t,
+		time = 0.2,
+		width = 5,
+		color = {1, 1, 0, 1}
+	}
+	local lines1 = {
+		{width = 7, color = {1, 0.5, 0, 1}},
+		{width = 5, color = {1, 1, 0, 1}},
+		{width = 3, color = {1, 1, 0.75, 1}}
+	}
+	local lines2 = {
+		{width = 2 , color = {1, 1, 1, 1}}
+	}
+	bullet.lines = lines1
+	bullet.update = function(obj, dt)
+		obj.time = obj.time - dt
+		if obj.time < 0.10 then
+			obj.lines = lines2
+			if not obj.alpha then
+				obj.alpha = 1
+			else
+				obj.alpha = obj.time / 0.10
+			end
+		end
+	end
+	bullet.isDead = function(obj)
+		return obj.time <= 0
+	end
+	bullet.draw = function(obj)
+		love.graphics.setLineStyle("smooth")
+		for _, line in ipairs(obj.lines) do
+			local r, g, b, a = unpack(line.color)
+			if obj.alpha then
+				a = obj.alpha
+			end
+			love.graphics.setColor(r, g, b, a)
+			love.graphics.setLineWidth(line.width)
+			love.graphics.line(
+				obj.x0, 
+				obj.y0, 
+				obj.x0 + obj.dx * obj.tmax, 
+				obj.y0 + obj.dy * obj.tmax
+			)
+		end
+	end
+	game:emplace("particles", bullet)
+
+	for i = 1, 3 do
+		local shock = Sprite:new("shockwave", rects.shockwave[1], 39, 13, mp.x, mp.y)
+		-- shock.color = {r = 0, b = 0, g = 0, a = 1}
+		shock:setAngle(self.angle + math.pi/2)
+		shock:translate(dx*(i-1)*15, dy*(i-1)*15)
+		shock.isDead = function(obj)
+			return not obj.isAnimating
+		end
+		shock:playAnimation("shockwave"..(4-i))
+		game:emplace("particles", shock)
+	end
+
+end
+
+function Gun:fireBullet2(dx, dy, t)
 	local mp = self.muzzlePoint
 	local bullet = {
 		x0 = mp.x,

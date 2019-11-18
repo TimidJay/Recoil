@@ -48,18 +48,29 @@ function EditorState:initialize()
 	frame:SetName("Tiles")
 	frame:ShowCloseButton(false)
 	frame:SetPos(window.w - 200, 100)
-	frame:SetWidth(120)
+	frame:SetWidth(150)
 	frame:SetHeight(250)
 	frame:SetState("EditorState")
 
 	local flist = loveframes.Create("list", frame)
 	flist:SetPos(10, 40)
-	flist:SetWidth(100)
+	flist:SetWidth(120)
 	flist:SetHeight(200)
 	flist:SetSpacing(5)
 	flist:SetPadding(5)
 
-	local tileKeys = {"block", "deathblock"}
+	local tileKeys = {
+		"block", 
+		"deathblock",
+		"laser1",
+		"laser2",
+		"laser3",
+		"laser4",
+		"shield1",
+		"shield2",
+		"shield3",
+		"shield4"
+	}
 	for i, key in ipairs(tileKeys) do
 		local tileData = data.tiles[key]
 		button = loveframes.Create("button", frame)

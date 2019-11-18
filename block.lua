@@ -26,3 +26,7 @@ end
 
 function Block:onPlayerHit(player)
 end
+
+function Block:onBulletHit()
+	--print("Hit block at ("..self.i..", "..self.j..")")
+end
