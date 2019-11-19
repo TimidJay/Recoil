@@ -1,8 +1,8 @@
-DeathBlock = class("DeathBlock", Sprite)
+DeathBlock = class("DeathBlock", Block)
 
---Block is a standard solid tile that does nothing
+-- Die on contact with a DeathBlock
 
---NOTE: Block takes grid coordinates i, j instead of pixel coords x, y
+--NOTE: DeathBlock takes grid coordinates i, j instead of pixel coords x, y
 --Unlike other objects, Blocks and other tiles should remain static and grid-aligned
 function DeathBlock:initialize(i, j)
 	local imgstr = "death_brick"

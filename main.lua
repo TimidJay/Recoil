@@ -128,6 +128,7 @@ function love.load(arg)
 	require("death_block")
 	require("laserblock")
 	require("shieldblock")
+	require("falling_block")
 
 	require("data")
 
