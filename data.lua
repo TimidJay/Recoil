@@ -6,6 +6,7 @@ data.tiles = {
 	--editor is the displayed image for the level editor
 	block      = {class = Block     , args = {}, editor = {name = "Regular Block", imgstr = "brick", rect = nil}},
 	deathblock = {class = DeathBlock, args = {}, editor = {name = "Death Block", imgstr = "death_brick", rect = nil}},
+    switchblock = {class = SwitchBlock, args = {}, editor = {name = "Switch Block", imgstr = "bluebrick", rect = nil}},
 	laser1 = {class = LaserBlock, args = {"up"}, editor = {name = "Laser (Up)", imgstr = "laserblock", rect = rects.tile[1][1]}},
 	laser2 = {class = LaserBlock, args = {"right"}, editor = {name = "Laser (Right)", imgstr = "laserblock", rect = rects.tile[1][2]}},
 	laser3 = {class = LaserBlock, args = {"down"}, editor = {name = "Laser (Down)", imgstr = "laserblock", rect = rects.tile[1][3]}},

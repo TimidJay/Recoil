@@ -70,7 +70,8 @@ function EditorState:initialize()
 		"shield1",
 		"shield2",
 		"shield3",
-		"shield4"
+		"shield4",
+        "switchblock"
 	}
 	for i, key in ipairs(tileKeys) do
 		local tileData = data.tiles[key]

@@ -129,6 +129,7 @@ function love.load(arg)
 	require("laserblock")
 	require("shieldblock")
 	require("falling_block")
+    require("switchblock")
 
 	require("data")
 
@@ -148,10 +149,10 @@ function setScreenShake()
 
 	local ss = screen_shake
 	ss.on = true
-	ss.timer = 0.3
+	ss.timer = 0.1
 	ss.maxTimer = ss.timer
 	--magnitude will decrease linearly to 0
-	ss.mag = 3
+	ss.mag = 1
 	ss.maxMag = ss.mag
 end
 

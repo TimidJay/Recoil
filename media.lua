@@ -224,6 +224,8 @@ loadImage("shockwave", "media/recoil_shockwave.png")
 loadImage("laserblock", "media/laserblock2.png")
 loadImage("shieldblock", "media/shieldblock2.png")
 loadImage("fallingblock", "media/fallingblock.png")
+loadImage("bluebrick", "media/bluebrick.png")
+loadImage("redbrick", "media/redbrick.png")
 
 --quads are required to be tied to an image
 --rects are just simple tables with (x, y, w, h)
