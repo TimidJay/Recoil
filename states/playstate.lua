@@ -10,9 +10,12 @@ function PlayState:initialize(mode)
 	self.player = Player:new(game.gates.enter:getPos())
 	game.gates.enter:ejectPlayer(self.player)
 	self:setTileGrid()
+
+	love.mouse.setCursor(cursors.ready)
 end
 
 function PlayState:close()
+	love.mouse.setCursor()
 	playstate = nil
 end
 

@@ -112,7 +112,8 @@ function love.load(arg)
 	love.mouse.setGrabbed(true)
 	love.graphics.setDefaultFilter("nearest", "nearest", 1)
 
-	
+	love.audio.setVolume(0.5)
+
 	console.load(love.graphics.newFont("fonts/Inconsolata.otf", 16), true, executeImmediately)
 	console.i("With this console, you can execute any lua code you want!")
 
@@ -149,11 +150,12 @@ function setScreenShake()
 
 	local ss = screen_shake
 	ss.on = true
-	ss.timer = 0.1
+	ss.timer = 0.2
 	ss.maxTimer = ss.timer
 	--magnitude will decrease linearly to 0
 	ss.mag = 1
 	ss.maxMag = ss.mag
+	ss.linearDecay = false
 end
 
 
@@ -176,7 +178,7 @@ function love.update(dt)
 	end
 	mouse.x, mouse.y = love.mouse.getPosition()
 
-	game:update(dt*time_scale)
+	game:update(math.min(1/60, dt*time_scale))
 
 	for k, v in pairs(keys) do
 		keys[k] = nil
@@ -190,7 +192,9 @@ function love.update(dt)
 		if ss.timer <= 0 then
 			ss.on = false
 		end
-		ss.mag = ss.timer / ss.maxTimer * ss.maxMag
+		if ss.linearDecay then
+			ss.mag = ss.timer / ss.maxTimer * ss.maxMag
+		end
 	end
 
 end

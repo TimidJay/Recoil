@@ -208,6 +208,13 @@ local genFonts = generateFonts
 -- loadSound("blockhit"         , "audio/gameplay/Block Armor.wav")
 -- loadSound("blockbreak"       , "audio/gameplay/Block Destroyed.wav")
 
+loadSound("shoot", "audio/shoot.wav")
+loadSound("m1_ping", "audio/m1_garand_ping.mp3")
+loadSound("m1_shot", "audio/m1_garand_shot_quieter.wav")
+loadSound("m1_cock", "audio/shotgun_cock.wav")
+
+cursors.ready = love.mouse.newCursor("media/crosshair1.png", 15, 15)
+cursors.empty = love.mouse.newCursor("media/crosshair2.png", 15, 15)
 
 loadImage("white_pixel", "media/whitepixel.png")
 loadImage("clear_pixel", "media/clearpixel.png")

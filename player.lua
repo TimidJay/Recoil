@@ -194,30 +194,37 @@ function Gun:initialize(player)
 	self.player = player
 	self:setPos(player:getPos())
 	self.muzzleOffset = {dx = 27, dy = -2}
-	self.muzzlePoint = {x = self.x, y = self.y}
+	self.muzzlePoint = {x = 0, y = 0} --to be initialized
 	self:setMuzzlePoint()
 	self.cooldown = 0
+
+	self.state = "ready" --ready, empty, reloading
+	self.reloadTimer = 0
 end
 
 function Gun:setMuzzlePoint()
 	local mo = self.muzzleOffset
 	local mp = self.muzzlePoint
 	local dx, dy = mo.dx, mo.dy
+	if self.flip then dy = -dy end
 	dx, dy = util.rotateVec2(dx, dy, self.angle)
 	mp.x = self.x + dx
 	mp.y = self.y + dy
 end
 
 function Gun:canFire()
-	if self.cooldown > 0 then return false end
+	if self.state ~= "ready" then return false end
 	if mouse.m1 ~= 1 then return false end
 	return true
 end
 
 function Gun:fire()
 	setScreenShake()
+	playSound("m1_shot")
+	-- playSound("shoot")
 
-	self.cooldown = Player.fire_delay
+	self.state = "empty"
+	love.mouse.setCursor(cursors.empty)
 
 	local mp = self.muzzlePoint
 	local dx, dy = mouse.x - mp.x, mouse.y - mp.y
@@ -363,58 +370,6 @@ function Gun:fireBullet(dx, dy, t)
 		shock:playAnimation("shockwave"..(4-i))
 		game:emplace("particles", shock)
 	end
-
-end
-
-function Gun:fireBullet2(dx, dy, t)
-	local mp = self.muzzlePoint
-	local bullet = {
-		x0 = mp.x,
-		y0 = mp.y,
-		dx = dx,
-		dy = dy,
-		t0 = 0,
-		t1 = 0,
-		tmax = t,
-		phase = 0,
-		width = 3,
-		color = {1, 1, 0, 1}
-	}
-
-	bullet.tspd1 = 8000
-	bullet.tspd2 = 4000
-	--First the line segment will extend until it hits the target
-	--Then the line segment will shrink from the muzzle until it dissapears
-	bullet.update = function(obj, dt)
-		if obj.phase == 0 then
-			obj.t1 = obj.t1 + obj.tspd1 * dt
-			if obj.t1 >= obj.tmax then
-				obj.t1 = obj.tmax
-				obj.phase = 1
-			end
-		elseif obj.phase == 1 then
-			obj.t0 = obj.t0 + obj.tspd2 * dt
-			if obj.t0 >= obj.tmax then
-				obj.t0 = obj.tmax
-				obj.phase = 2
-			end
-		end
-	end
-	bullet.isDead = function(obj)
-		return obj.phase == 2
-	end
-	bullet.draw = function(obj)
-		love.graphics.setColor(unpack(obj.color))
-		love.graphics.setLineWidth(obj.width)
-		--the length of the line will change constantly
-		love.graphics.line(
-			obj.x0 + obj.dx * obj.t0, 
-			obj.y0 + obj.dy * obj.t0, 
-			obj.x0 + obj.dx * obj.t1, 
-			obj.y0 + obj.dy * obj.t1
-		)
-	end
-	game:emplace("particles", bullet)
 end
 
 --maybe move some update functions here
@@ -423,15 +378,55 @@ function Gun:update(dt)
 	if mouse.m2 then
 		dx, dy = -dx, -dy
 	end
+
 	local theta = math.atan2(dy, dx)
 	self.angle = theta
+	--flip the gun upside down if aiming to the left
+	local deg = math.deg(theta)
+	self.flip = deg > 90 or deg < -90
+	
 	self:setPos(self.player:getPos())
 	self:setMuzzlePoint()
-	self.cooldown = self.cooldown - dt
+
+	if self.state == "empty" then
+		if not self.player.helpless and self.player.touchingGround then
+			self.state = "reloading"
+			self.reloadTimer = 0.25
+			playSound("m1_cock")
+		end
+	elseif self.state == "reloading" then
+		self.reloadTimer = self.reloadTimer - dt
+		if self.reloadTimer <= 0 then
+			self.state = "ready"
+			love.mouse.setCursor(cursors.ready)
+			self:ejectCasing()
+			
+		end
+	end
+	--does nothing when state is "ready"
+end
+
+function Gun:ejectCasing()
+	local casing = Sprite:new(nil, nil, 10, 5, self.x, self.y)
+	casing.color = {r = 1, g = 1, b = 0, a = 1}
+	local deg = math.deg(self.angle)
+	local mag = 300
+	if self.flip then mag = -mag end
+	casing.vx, casing.vy = util.rotateVec(0, -mag, deg + math.random(30) - 15)
+	casing.ay = 1500
+	casing.angle = self.angle
+
+	game:emplace("particles", casing)
 end
 
 function Gun:draw()
+	if self.flip then
+		self.h = -self.h
+	end
 	Sprite.draw(self)
+	if self.flip then
+		self.h = -self.h
+	end
 	--show the muzzle point for debug
 	-- love.graphics.setColor(1, 0, 0, 1)
 	-- local mp = self.muzzlePoint
