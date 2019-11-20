@@ -44,8 +44,8 @@ function DonutBlock:update(dt)
 		self:checkPlayerOnTop()
 	else
 		self:fall()
-		--Conditional to respawn at original position if block falls a bit below screen - set to 30 for now, will confirm later
-		if self.y>=30 then
+		--Conditional to respawn at original position if block falls a bit below screen - set to 1000 for now, will confirm later
+		if self.y>=1000 then
 			falling=false
 			self.y=initY
 			self.vy=0
