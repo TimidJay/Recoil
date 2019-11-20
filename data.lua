@@ -14,6 +14,7 @@ data.tiles = {
 	shield2 = {class = ShieldBlock, args = {"right"}, editor = {name = "Shield (Right)", imgstr = "shieldblock", rect = rects.tile[1][2]}},
 	shield3 = {class = ShieldBlock, args = {"down"}, editor = {name = "Shield (Down)", imgstr = "shieldblock", rect = rects.tile[1][3]}},
 	shield4 = {class = ShieldBlock, args = {"left"}, editor = {name = "Shield (Left)", imgstr = "shieldblock", rect = rects.tile[1][4]}},
+	fallingblock = {class = FallingBlock, args = {}, editor = {name = "Falling Block", imgstr = "fallingblock"}, rect = nil}
 }
 
 --each value should also contain its own key

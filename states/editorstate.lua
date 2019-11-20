@@ -62,6 +62,7 @@ function EditorState:initialize()
 	local tileKeys = {
 		"block", 
 		"deathblock",
+		"fallingblock",
 		"laser1",
 		"laser2",
 		"laser3",

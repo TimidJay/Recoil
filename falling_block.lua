@@ -5,22 +5,25 @@ FallingBlock = class("FallingBlock", Block)
 --NOTE: FallingBlock takes grid coordinates i, j instead of pixel coords x, y
 --Unlike other objects, Blocks and other tiles should remain static and grid-aligned
 function FallingBlock:initialize(i, j)
-	local imgstr = "fallingblock"
-	local rect = nil
-	local x = config.wall_l + (j-0.5)*config.cell_w
-	local y = config.ceil + (i-0.5)*config.cell_h
-	local falling = false
-	Sprite.initialize(self, imgstr, rect, 30, 30, x, y)
-	self.i, self.j = i, j
-	--the initial position of this shape won't matter
-	--because it will immediately be moved to the sprite
-	local shape = util.newRectangleShape(30, 30)
-	self:setShape(shape)
+	Block.initialize(self,i,j)
+	self.imgstr = "fallingblock"
 end
 
 
+function FallingBlock:update(dt)
 
+	local check, dx, dy = self:checkPlayerCollision(playstate.player)
 
+	if check and dy > 0 then
+		playstate.player.dead = true
+	end
+
+	self:checkBelow(playstate.player)
+	
+	self:onPlayerHit(playstate.player)
+
+	Block.update(self,dt)
+end
 
 --check if player and block intersects
 --also returns horizontal and vertical separation vectors
@@ -29,19 +32,23 @@ function FallingBlock:checkPlayerCollision(player)
 end
 
 function FallingBlock:checkBelow(player)
-	if self.i == player.i and self.j - player.j <= 5 then
-		self.falling = true
+
+	playeri, playerj = getGridPos(player.x,player.y) 
+	if self.j == playerj and playeri- self.i <= 5 and playeri - self.i > 0 then
+		self:fall(player)
 	end
 end
 
-function DeathBlock:onPlayerHit(player)
-	if self.i == player.i and self.j - player.j == 1 then
-		player.dead = true
-	end
-end
+-- function FallingBlock:onPlayerHit(player)
+-- 	playeri, playerj = getGridPos(player.x,player.y) 
+-- 	if self.j == playerj and playeri - self.i == 1 then
+-- 		print("DEAD")
+-- 		player.dead = true
+-- 	end
+-- end
 
 -- TODO: figure out how to move block until it hits ground
 -- TODO: check for other blocks
 function FallingBlock:fall(player)
-	self.i = self.i + 1
+	self.vy = 650
 end
