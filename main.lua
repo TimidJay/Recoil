@@ -130,6 +130,7 @@ function love.load(arg)
 	require("laserblock")
 	require("shieldblock")
 	require("falling_block")
+	require("donut")
     require("switchblock")
 
 	require("data")
