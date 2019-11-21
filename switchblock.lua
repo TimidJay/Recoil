@@ -1,28 +1,30 @@
 SwitchBlock = class("SwitchBlock", Block)
 
---Block is a standard solid tile that does nothing
-
---NOTE: Block takes grid coordinates i, j instead of pixel coords x, y
---Unlike other objects, Blocks and other tiles should remain static and grid-aligned
-function SwitchBlock:initialize(i, j)
+SwitchBlock.colors = {
+    red = {1, 0, 0},
+    green = {0, 1, 0},
+    blue = {0, 0, 1},
+    yellow = {1, 1, 0}
+}
+function SwitchBlock:initialize(i, j, switchColor)
     Block.initialize(self, i, j)
-	self.imgstr = "bluebrick"
+    --toggle determines whether or not block can be
+    --toggled on/off or just stay on
     self.toggle = true
+	self.imgstr = "switch_off"
+    self.on = false
+    self.switchColor = switchColor
+    local sc = SwitchBlock.colors["red"]
+    self.color = {r = sc[1], g = sc[2], b = sc[3], a = 1}
     self.touched = 0
 end
-
 
 function SwitchBlock:onPlayerHit(player)
     if self.touched == 0 then
         if self.toggle then
-            if self.imgstr == "bluebrick" then
-                self.imgstr = "redbrick"
-            else
-                self.imgstr = "bluebrick"
-            end
-                
+            self.on = not self.on
         else
-            self.imgstr = "redbrick"
+            self.on = true
         end
     end
     self.touched = 2
@@ -33,11 +35,14 @@ function SwitchBlock:onBulletHit()
 end
 
 function SwitchBlock:update(dt)
-
     if self.touched > 0 then
         self.touched = self.touched - 1
     end
 
-
     Block.update(self, dt)
+end
+
+function SwitchBlock:draw()
+    self.imgstr = self.on and "switch_on" or "switch_off"
+    Block.draw(self)
 end

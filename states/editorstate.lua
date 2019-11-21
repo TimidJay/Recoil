@@ -5,7 +5,7 @@ EditorState = class("EditorState")
 --  Both gates are 5 tiles long, can only appear on the edge of the level
 --  Entrance gate is green, exit gate is red?
 
-tool = "fillrect"
+tool = "free"
 
 function EditorState:initialize()
 	editorstate = self
@@ -43,11 +43,38 @@ function EditorState:initialize()
 	self.selectedTile = "block"
 
 	--gui stuff
+	self.frames = {}
 
+	--tool stuff
+	local frame = loveframes.Create("frame")
+	frame:SetName("Tools")
+	frame:ShowCloseButton(false)
+	frame:SetPos(window.w - 350, 80)
+	frame:SetWidth(100)
+	frame:SetHeight(150)
+	frame:SetState("EditorState")
+
+	local tools = {
+		"free",
+		"rect",
+		"fillrect"
+	}
+	for i, name in ipairs(tools) do
+		local button = loveframes.Create("button", frame)
+		button:SetPos(10, 40 + (i-1)*30)
+		button:SetText(name)
+		button.OnClick = function(obj)
+			tool = name
+		end
+	end
+
+	self.frames.tool = frame
+
+	--tile stuff
 	local frame = loveframes.Create("frame")
 	frame:SetName("Tiles")
 	frame:ShowCloseButton(false)
-	frame:SetPos(window.w - 200, 100)
+	frame:SetPos(window.w - 220, 80)
 	frame:SetWidth(150)
 	frame:SetHeight(250)
 	frame:SetState("EditorState")
@@ -75,7 +102,7 @@ function EditorState:initialize()
 	}
 	for i, key in ipairs(tileKeys) do
 		local tileData = data.tiles[key]
-		button = loveframes.Create("button", frame)
+		local button = loveframes.Create("button", frame)
 		button:SetText(tileData.editor.name)
 		button.OnClick = function(obj, x, y)
 			self.selectedTile = key
@@ -83,7 +110,33 @@ function EditorState:initialize()
 		flist:AddItem(button)
 	end
 
-	self.frame = frame
+	self.frames.tile = frame
+
+	--switch stuff
+
+	local frame = loveframes.Create("frame")
+	frame:SetName("Switch Blocks")
+	frame:ShowCloseButton(false)
+	frame:SetPos(window.w - 540, 80)
+	frame:SetWidth(250)
+	frame:SetHeight(180)
+	frame:SetState("EditorState")
+
+	local choice = loveframes.Create("multichoice", frame)
+	choice:SetPos(10, 40)
+	choice:SetWidth(90)
+	local colors = {"red", "green", "blue", "yellow"}
+	for i, c in ipairs(colors) do
+		choice:AddChoice(c)
+	end
+	choice:SetChoice("red")
+
+	-- local button = loveframes.Create("button", frame)
+	-- button:SetName("Switch Block")
+	-- button:SetPos()
+
+	self.frames.switch = frame
+
 end
 
 function EditorState:close()
@@ -237,8 +290,10 @@ function EditorState:update(dt)
 	end
 
 	--don't interact with background if mouse is in a gui
-	if EditorState.containMouse(self.frame) and mouse.m1 ~= 2 then
-		return
+	for k, f in pairs(self.frames) do
+		if EditorState.containMouse(f) then
+			return 
+		end
 	end
 
 	--dragging gates around

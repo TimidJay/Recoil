@@ -233,6 +233,8 @@ loadImage("shieldblock", "media/shieldblock2.png")
 loadImage("fallingblock", "media/fallingblock.png")
 loadImage("bluebrick", "media/bluebrick.png")
 loadImage("redbrick", "media/redbrick.png")
+loadImage("switch_on", "media/switch_on.png")
+loadImage("switch_off", "media/switch_off.png")
 
 --quads are required to be tied to an image
 --rects are just simple tables with (x, y, w, h)
