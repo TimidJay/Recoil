@@ -194,16 +194,21 @@ function EditorState:saveLevel(filename)
 	file:close()
 end
 
-function loadLevel(filename)
+function loadLevel(filename, isPushed)
 	if game:top() ~= editorstate then
 		print("Make sure you're in the Level Editor state!")
 		return
 	end
-	editorstate:loadLevel(filename)
+	editorstate:loadLevel(filename, isPushed)
 end
 
-function EditorState:loadLevel(filename)
-	local chunk = love.filesystem.load("levels/"..filename)
+function EditorState:loadLevel(filename, isPushed)
+	local chunk
+	if isPushed then
+		chunk = love.filesystem.load("pushedlevels/"..filename)
+	else
+		chunk = love.filesystem.load("levels/"..filename)
+	end
 	if not chunk then
 		print("ERROR: File "..filename.." not found!")
 		return
