@@ -300,12 +300,16 @@ function Gun:fire()
 	end
 	game:emplace("particles", hit)
 
+	
+	self:bulletExplosion(tx, ty)
 	--fire the bullet particle effect
-	self:fireBullet(dx, dy, tmin)
+	self:bulletTrail(dx, dy, tmin)
+	--create impact sparks
+	self:bulletImpactSparks(tx, ty, dx, dy, hitShape)
 end
 
 --fire a menacing yet harmless bullet
-function Gun:fireBullet(dx, dy, t)
+function Gun:bulletTrail(dx, dy, t)
 	local mp = self.muzzlePoint
 	local bullet = {
 		x0 = mp.x,
@@ -369,6 +373,105 @@ function Gun:fireBullet(dx, dy, t)
 		end
 		shock:playAnimation("shockwave"..(4-i))
 		game:emplace("particles", shock)
+	end
+end
+
+--spawns a small circular explosion at point of impact
+function Gun:bulletExplosion(x, y)
+	local circle = {
+		x = x,
+		y = y,
+		r = 12,
+		dr = 50
+	}
+	circle.update = function(obj, dt)
+		obj.r = math.max(0, obj.r - obj.dr * dt)
+	end
+	circle.isDead = function(obj)
+		return obj.r == 0
+	end
+	circle.draw = function(obj)
+		love.graphics.setColor(1, 1, 1, 1)
+		love.graphics.circle("fill", obj.x, obj.y, obj.r)
+	end
+	game:emplace("particles", circle)
+end
+
+--generates bullet impact sparks
+--currently only works for axis aligned rectangular shapes
+function Gun:bulletImpactSparks(px, py, vx, vy, shape)
+	--vector reflects vertically or horizontally based on
+	--impact point's relative position to the shape's center
+	local cx, cy = shape:center()
+	local dx, dy = cx - px, cy - py
+	local dxa, dya = math.abs(dx), math.abs(dy)
+	local nx, ny
+	if dya > dxa then
+		vx, vy = vx, -vy
+		nx = 0
+		ny = (dy > 0) and -1 or 1
+	else
+		vx, vy = -vx, vy
+		ny = 0
+		nx = (dx > 0) and -1 or 1
+	end
+
+	local rad = util.angleBetween(vx, vy, nx, ny)
+	local deg = math.deg(rad)
+	deg = 90 - deg
+	deg = math.min(45, deg)
+
+	for i = 1, 8 do
+		local deg = math.random(deg*2) - deg
+		local vx, vy = util.rotateVec(vx, vy, deg)
+		local len = 60
+		local spark = {
+			x0 = px, --origin
+			y0 = py,
+			vx = vx, --direction
+			vy = vy,
+			t0 = 0, --startpoint
+			t1 = len, --endpoint
+			spd = math.random(600, 800),
+			timer = 0.3,
+			dead = false,
+			color = {
+				r = 1,
+				g = 1,
+				b = 1,
+				a = 1
+			}
+		}
+		spark.maxTimer = spark.timer
+		spark.update = function(obj, dt)
+			obj.timer = math.max(0, obj.timer - dt)
+			obj.spd = math.max(200, obj.spd - 1000 * dt)
+			--startpoint will catch up to the endpoint
+			obj.t0 = obj.t0 + obj.spd * dt * 1.4
+			obj.t1 = obj.t1 + obj.spd * dt
+
+			if obj.t0 > obj.t1 then
+				obj.dead = true
+			end
+
+			local c = obj.color
+			c.b = c.b - (2 * dt)
+		end
+		spark.isDead = function(obj)
+			return obj.dead
+		end
+		spark.draw = function(obj)
+			love.graphics.setLineStyle("rough")
+			love.graphics.setLineWidth(3)
+			local c = obj.color
+			love.graphics.setColor(c.r, c.g, c.b, c.a)
+			local x0 = obj.x0 + obj.vx * obj.t0
+			local y0 = obj.y0 + obj.vy * obj.t0
+			local x1 = obj.x0 + obj.vx * obj.t1
+			local y1 = obj.y0 + obj.vy * obj.t1
+			love.graphics.line(x0, y0, x1, y1)
+		end
+		game:emplace("particles", spark)
 	end
 end
 
