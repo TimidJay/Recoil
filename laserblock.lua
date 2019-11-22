@@ -26,12 +26,13 @@ function LaserBlock:fireLaser()
 	i, j = i + di, j + dj
 
 	while boundCheck(i, j) do
-		local tile = playstate.tileGrid[i][j]
-		if tile then
-			--self.stop is a scalar that represents length of laser
-			self.stop = math.abs(i - self.i) + math.abs(j - self.j)
-			self.stop = self.stop * self.w - self.w/2
-			return
+		for _, tile in ipairs(playstate.tileGrid[i][j]) do
+			if tile.tangible then
+				--self.stop is a scalar that represents length of laser
+				self.stop = math.abs(i - self.i) + math.abs(j - self.j)
+				self.stop = self.stop * self.w - self.w/2
+				return
+			end
 		end
 		i, j = i + di, j + dj
 	end

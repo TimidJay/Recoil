@@ -9,6 +9,12 @@ function PlayState:initialize(mode)
 	self.state = "playing" --playing, death, victory
 	self.player = Player:new(game.gates.enter:getPos())
 	game.gates.enter:ejectPlayer(self.player)
+
+	--initializes tile grid for collision detection
+	self.tileGrid = {}
+	for i = 1, config.grid_h do
+		table.insert(self.tileGrid, {})
+	end
 	self:setTileGrid()
 
 	love.mouse.setCursor(cursors.ready)
@@ -19,17 +25,40 @@ function PlayState:close()
 	playstate = nil
 end
 
---initializes tile grid for collision detection
---should be called after the tiles are constructed
+--partions tiles to a grid based on its position
+--can now do moving blocks
 function PlayState:setTileGrid()
-	local grid = {}
+	local grid = self.tileGrid
 	for i = 1, config.grid_h do
-		table.insert(grid, {})
+		for j = 1, config.grid_w do
+			grid[i][j] = {}
+		end
 	end
 	for _, t in ipairs(game.tiles) do
-		grid[t.i][t.j] = t
+		if t:isAlignedToGrid() then
+			--simple partioning
+			table.insert(grid[t.i][t.j], t)
+		else
+			--insert the same block in 4 adj grid cells
+			local cx, cy = t:getPos()
+			local gx, gy = getGridPosInv(t.i, t.j)
+			local dj, di = -1, -1
+			if cx > gx then
+				dj = 1
+			end
+			if cy > gy then
+				di = 1
+			end
+			for i = 0, di, di do
+				for j = 0, dj, dj do
+					local ii, jj = t.i + i, t.j + j
+					if boundCheck(ii, jj) then
+						table.insert(grid[ii][jj], t)
+					end
+				end
+			end
+		end
 	end
-	self.tileGrid = grid
 end
 
 -- returns a list of tiles adjacent to the player in
@@ -53,16 +82,29 @@ function PlayState:getAdjTiles(player)
 		i-1, j-1,
 		i-1, j+1
 	}
+	local duplicate = {} --check for duplicates
+	local static = {} --this has higher priority
+	local nonStatic = {} --non static (moving bricks) have less priority
 	for index = 1, 16, 2 do
 		local ti, tj = coords[index], coords[index+1]
 		if boundCheck(ti, tj) then
-			local tile = self.tileGrid[ti][tj]
-			if tile then
-				table.insert(candidates, tile)
+			local li = self.tileGrid[ti][tj]
+			for _, tile in ipairs(li) do
+				if not duplicate[tile] then
+					if tile.static then
+						table.insert(static, tile)
+					else
+						table.insert(nonStatic, tile)
+					end
+					duplicate[tile] = true
+				end
 			end
 		end
 	end
-	return candidates
+	for i, v in ipairs(nonStatic) do
+		table.insert(static, v)
+	end
+	return static
 end
 
 
@@ -174,6 +216,8 @@ function PlayState:update(dt)
 	--collision stuff
 	player.touchingGround = false
 
+	self:setTileGrid()
+
 	--Player collision with wall
 	for _, wall in pairs(game.walls) do
 		local check, dx, dy = wall:checkPlayerCollision(player)
@@ -236,14 +280,14 @@ function PlayState:draw()
 	-- rec("fill" , config.wall_r, 0, config.border_w, window.h) --right wall
 	-- love.graphics.setColor(1, 1, 1, 1)
 
+	--drawing order is important here
 	for _, w in pairs(game.walls) do
 		w:draw()
 	end
-	
 	for _, t in ipairs(game.tiles) do
 		t:draw()
+		t:drawActuator()
 	end
-	--draw order is important
 	self.player:draw()
 	for _, p in ipairs(game.particles) do
 		p:draw()

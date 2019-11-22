@@ -41,6 +41,7 @@ function EditorState:initialize()
 	self.pit = {} --work in progress
 
 	self.selectedTile = "block"
+	self.selectedActuator = nil
 
 	--gui stuff
 	self.frames = {}
@@ -49,7 +50,7 @@ function EditorState:initialize()
 	local frame = loveframes.Create("frame")
 	frame:SetName("Tools")
 	frame:ShowCloseButton(false)
-	frame:SetPos(window.w - 350, 80)
+	frame:SetPos(window.w - 340, 80)
 	frame:SetWidth(100)
 	frame:SetHeight(150)
 	frame:SetState("EditorState")
@@ -99,7 +100,6 @@ function EditorState:initialize()
 		"shield2",
 		"shield3",
 		"shield4",
-        "switchblock"
 	}
 	for i, key in ipairs(tileKeys) do
 		local tileData = data.tiles[key]
@@ -107,6 +107,7 @@ function EditorState:initialize()
 		button:SetText(tileData.editor.name)
 		button.OnClick = function(obj, x, y)
 			self.selectedTile = key
+			self.selectedActuator = nil
 		end
 		flist:AddItem(button)
 	end
@@ -118,23 +119,52 @@ function EditorState:initialize()
 	local frame = loveframes.Create("frame")
 	frame:SetName("Switch Blocks")
 	frame:ShowCloseButton(false)
-	frame:SetPos(window.w - 540, 80)
-	frame:SetWidth(250)
-	frame:SetHeight(180)
+	frame:SetPos(window.w - 550, 80)
+	frame:SetWidth(200)
+	frame:SetHeight(120)
 	frame:SetState("EditorState")
 
 	local choice = loveframes.Create("multichoice", frame)
 	choice:SetPos(10, 40)
 	choice:SetWidth(90)
-	local colors = {"red", "green", "blue", "yellow"}
-	for i, c in ipairs(colors) do
+	local colors = {
+		red = "switch1",
+		green = "switch2",
+		blue = "switch3" ,
+		yellow = "switch4"
+	}
+	for c, v in pairs(colors) do
 		choice:AddChoice(c)
 	end
 	choice:SetChoice("red")
+	choice.OnChoiceSelected = function(obj, col)
+		if self.selectedActuator then
+			self.selectedActuator = col
+		else
+			local key = self.selectedTile
+			if key:sub(1, 6) == "switch" then
+				self.selectedTile = colors[col]
+			end
+		end
+	end
 
-	-- local button = loveframes.Create("button", frame)
-	-- button:SetName("Switch Block")
-	-- button:SetPos()
+	local button1 = loveframes.Create("button", frame)
+	button1:SetText("Switch Block")
+	button1:SetPos(110, 40)
+	button1.OnClick = function(obj, x, y)
+		local col = choice:GetChoice()
+		local key = colors[col]
+		self.selectedTile = key
+		self.selectedActuator = nil
+	end
+
+	local button2 = loveframes.Create("button", frame)
+	button2:SetText("Actuator")
+	button2:SetPos(110, 80)
+	button2.OnClick = function(obj, x, y)
+		local col = choice:GetChoice()
+		self.selectedActuator = col
+	end
 
 	self.frames.switch = frame
 
@@ -344,7 +374,11 @@ function EditorState:update(dt)
 			node.highlight = true
 
 			if mouse.m1 then
-				node:setTile(self.selectedTile)
+				if self.selectedActuator then
+					node:setActuator(self.selectedActuator)
+				else
+					node:setTile(self.selectedTile)
+				end
 			elseif mouse.m2 then
 				node:clear()
 			end
@@ -383,7 +417,11 @@ function EditorState:update(dt)
 			elseif self.clicked then
 				for _, node in ipairs(self.selectedNodes) do
 					if self.clicked.mode == 1 then
-						node:setTile(self.selectedTile)
+						if self.selectedActuator then
+							node:setActuator(self.selectedActuator)
+						else
+							node:setTile(self.selectedTile)
+						end
 					else
 						node:clear()
 					end
@@ -501,6 +539,7 @@ function GridNode:initialize(editorstate, i, j)
 	self.x = config.wall_l + (j-0.5)*config.cell_w
 	self.y = config.ceil + (i-0.5)*config.cell_h
 	self.w, self.h = config.cell_w, config.cell_h
+	self.actuator = nil
 	self.highlight = false
 end
 
@@ -508,8 +547,16 @@ function GridNode:setTile(tileKey)
 	self.tile = data.tiles[tileKey]
 end
 
+function GridNode:setActuator(value)
+	if self.tile then
+		self.actuator = value
+		self.actuatorColor = SwitchBlock.colors[self.actuator]
+	end
+end
+
 function GridNode:clear()
 	self.tile = nil
+	self.actuator = nil
 end
 
 function GridNode:makeTile()
@@ -518,14 +565,23 @@ function GridNode:makeTile()
 	local class = self.tile.class
 	local args = self.tile.args
 	local tile = class:new(self.i, self.j, unpack(args))
+	tile.actuator = self.actuator
 	return tile
 end
 
 function GridNode:draw()
 	if self.tile then
 		local t = self.tile.editor
-		love.graphics.setColor(1, 1, 1, 1)
+		if t.color then
+			love.graphics.setColor(unpack(t.color))
+		else
+			love.graphics.setColor(1, 1, 1, 1)
+		end
 		draw(t.imgstr, t.rect, self.x, self.y, 0, self.w, self.h)
+	end
+	if self.actuator then
+		love.graphics.setColor(unpack(self.actuatorColor))
+		draw("actuator", nil, self.x, self.y, 0, self.w, self.h)
 	end
 end
 

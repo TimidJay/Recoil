@@ -18,10 +18,10 @@ data.tiles = {
 	fallingblock = {class = FallingBlock, args = {}, editor = {name = "Falling Block", imgstr = "fallingblock", rect = nil}},
 	--donutblock has no sprite for now so keeping it on default block sprite
 	donutblock = {class=DonutBlock, args={}, editor = {name = "Donut Block", imgstr = "brick", rect=nil}},
-	switch1 = {class = SwitchBlock, args = {"red"}, editor = {name = "Switch (Red)", imgstr = "switch_off", rect = nil}},
-	switch2 = {class = SwitchBlock, args = {"green"}, editor = {name = "Switch (Green)", imgstr = "switch_off", rect = nil}},
-	switch3 = {class = SwitchBlock, args = {"blue"}, editor = {name = "Switch (Blue)", imgstr = "switch_off", rect = nil}},
-	switch4 = {class = SwitchBlock, args = {"yellow"}, editor = {name = "Switch (Yellow)", imgstr = "switch_off", rect = nil}},
+	switch1 = {class = SwitchBlock, args = {"red"}, editor = {name = "Switch (Red)", imgstr = "switch_off", color = {1, 0, 0}}},
+	switch2 = {class = SwitchBlock, args = {"green"}, editor = {name = "Switch (Green)", imgstr = "switch_off", color = {0, 1, 0}}},
+	switch3 = {class = SwitchBlock, args = {"blue"}, editor = {name = "Switch (Blue)", imgstr = "switch_off", color = {0, 0, 1}}},
+	switch4 = {class = SwitchBlock, args = {"yellow"}, editor = {name = "Switch (Yellow)", imgstr = "switch_off", color = {1, 1, 0}}},
 }
 
 --each value should also contain its own key

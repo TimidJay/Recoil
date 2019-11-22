@@ -241,7 +241,9 @@ function Gun:fire()
 		if block.shieldShape then
 			table.insert(shapes, block.shieldShape)
 		end
-		table.insert(shapes, block.shape)
+		if block.tangible then
+			table.insert(shapes, block.shape)
+		end
 	end
 	for _, w in pairs(game.walls) do
 		table.insert(shapes, w.shape)

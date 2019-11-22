@@ -9,6 +9,7 @@ function DonutBlock:initialize(i,j,spd)
 	self.initX=self.x
 	self.initY=self.y
 	self.countdown=50
+	self.static = false
 end
 
 function DonutBlock:checkPlayerOnTop()
@@ -33,6 +34,13 @@ function DonutBlock:upwarp(player)
 	if player.touchingGround and (player.x-player.w/2)>=(self.x-self.w/2) and (player.x+player.w/2)<=(self.x+self.w/2) and Block.checkPlayerCollision(self,player) then
 		player.y=player.y-self.h/2-5
 		end
+end
+
+function DonutBlock:onPlayerHit(player)
+	if self.falling and self.vy > 0 then
+		player.y = player.y + self.vy * 1/60
+	end
+
 end
 
 function DonutBlock:update(dt)
