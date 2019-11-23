@@ -10,6 +10,7 @@ function DonutBlock:initialize(i,j,spd)
 	self.initY=self.y
 	self.countdown=50
 	self.static = false
+	self.deltaY = 0
 end
 
 function DonutBlock:checkPlayerOnTop()
@@ -38,7 +39,7 @@ end
 
 function DonutBlock:onPlayerHit(player)
 	if self.falling and self.vy > 0 then
-		player.y = player.y + self.vy * 1/60
+		player.y = player.y + self.deltaY + 1
 	end
 
 end
@@ -60,6 +61,8 @@ function DonutBlock:update(dt)
 			self.countdown=50
 		end
 	end
+	local oldY = self.y
 	Block.update(self,dt)
+	self.deltaY = self.y - oldY
 end
  

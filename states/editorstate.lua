@@ -46,10 +46,18 @@ function EditorState:initialize()
 	--gui stuff
 	self.frames = {}
 
+	--the default OnClose function deletes the frame
+	--however, I only want the frame to be hidden
+	local hide = function(obj)
+		obj:SetVisible(false)
+		return false
+	end
+
 	--tool stuff
 	local frame = loveframes.Create("frame")
+	frame.OnClose = hide
 	frame:SetName("Tools")
-	frame:ShowCloseButton(false)
+	-- frame:ShowCloseButton(true)
 	frame:SetPos(window.w - 340, 80)
 	frame:SetWidth(100)
 	frame:SetHeight(150)
@@ -73,8 +81,9 @@ function EditorState:initialize()
 
 	--tile stuff
 	local frame = loveframes.Create("frame")
+	frame.OnClose = hide
 	frame:SetName("Tiles")
-	frame:ShowCloseButton(false)
+	-- frame:ShowCloseButton(false)
 	frame:SetPos(window.w - 220, 80)
 	frame:SetWidth(150)
 	frame:SetHeight(250)
@@ -117,8 +126,9 @@ function EditorState:initialize()
 	--switch stuff
 
 	local frame = loveframes.Create("frame")
+	frame.OnClose = hide
 	frame:SetName("Switch Blocks")
-	frame:ShowCloseButton(false)
+	-- frame:ShowCloseButton(false)
 	frame:SetPos(window.w - 550, 80)
 	frame:SetWidth(200)
 	frame:SetHeight(120)
@@ -168,6 +178,35 @@ function EditorState:initialize()
 
 	self.frames.switch = frame
 
+	--summoning buttons to unhide "closed" frames
+
+	local button = loveframes.Create("button")
+	button:SetText("Tools Window")
+	button:SetPos(80, 0)
+	button:SetSize(100, 20)
+	button.OnClick = function(obj, x, y)
+		self.frames.tool:SetVisible(true)
+	end
+	button:SetState("EditorState")
+
+	local button = loveframes.Create("button")
+	button:SetText("Tiles Window")
+	button:SetPos(200, 0)
+	button:SetSize(100, 20)
+	button.OnClick = function(obj, x, y)
+		self.frames.tile:SetVisible(true)
+	end
+	button:SetState("EditorState")
+
+	local button = loveframes.Create("button")
+	button:SetText("Switches Window")
+	button:SetPos(320, 0)
+	button:SetSize(100, 20)
+	button.OnClick = function(obj, x, y)
+		self.frames.switch:SetVisible(true)
+	end
+	button:SetState("EditorState")
+
 end
 
 function EditorState:close()
@@ -201,7 +240,11 @@ function EditorState:saveLevel(filename)
 	file:write("level.tiles = {\n")
 	for _, n in ipairs(self.allNodes) do
 		if n.tile then
-			local line = "\t{"..n.i..", "..n.j..", \""..n.tile.key.."\"},\n"
+			local line = "\t{"..n.i..", "..n.j..", \""..n.tile.key.."\""
+			if n.actuator then
+				line = line..", \""..n.actuator.."\""
+			end
+			line = line.."},\n"
 			file:write(line)
 		end
 	end
@@ -246,8 +289,12 @@ function EditorState:loadLevel(filename, isPushed)
 	self:reset()
 	local level = chunk()
 	for _, t in ipairs(level.tiles) do
-		local i, j, key = unpack(t)
-		self.grid[i][j]:setTile(key)
+		local i, j = t[1], t[2]
+		local key = t[3]
+		local actuator = t[4]
+		local node = self.grid[i][j]
+		node:setTile(key)
+		node:setActuator(actuator)
 	end
 	for k, gate in pairs(self.gates) do
 		local t = level.gates[k]
@@ -548,6 +595,10 @@ function GridNode:setTile(tileKey)
 end
 
 function GridNode:setActuator(value)
+	if not value then
+		self.actuator = nil
+		return
+	end
 	if self.tile then
 		self.actuator = value
 		self.actuatorColor = SwitchBlock.colors[self.actuator]
