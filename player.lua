@@ -236,23 +236,24 @@ function Gun:fire()
 	--get all the collision shapes first
 	--could make a function out of this
 	local tmin = math.huge
-	local shapes = {}
-	for _, block in ipairs(game.tiles) do
-		if block.shieldShape then
-			table.insert(shapes, block.shieldShape)
-		end
-		if block.tangible then
-			table.insert(shapes, block.shape)
-		end
-	end
-	for _, w in pairs(game.walls) do
-		table.insert(shapes, w.shape)
-	end
-	for _, gate in pairs(game.gates) do
-		for _, s in ipairs(gate:getShapes()) do
-			table.insert(shapes, s)
-		end
-	end
+	-- local shapes = {}
+	-- for _, block in ipairs(game.tiles) do
+	-- 	if block.shieldShape and not block.disabled then
+	-- 		table.insert(shapes, block.shieldShape)
+	-- 	end
+	-- 	if block.tangible then
+	-- 		table.insert(shapes, block.shape)
+	-- 	end
+	-- end
+	-- for _, w in pairs(game.walls) do
+	-- 	table.insert(shapes, w.shape)
+	-- end
+	-- for _, gate in pairs(game.gates) do
+	-- 	for _, s in ipairs(gate:getShapes()) do
+	-- 		table.insert(shapes, s)
+	-- 	end
+	-- end
+	local shapes = playstate:getRaycastShapes()
 
 	--check for obstruction
 	--obstruction occurs when there is an object in between the player's center and muzzle point.
@@ -384,7 +385,7 @@ function Gun:bulletExplosion(x, y)
 		x = x,
 		y = y,
 		r = 12,
-		dr = 50
+		dr = 50,
 	}
 	circle.update = function(obj, dt)
 		obj.r = math.max(0, obj.r - obj.dr * dt)
@@ -422,11 +423,18 @@ function Gun:bulletImpactSparks(px, py, vx, vy, shape)
 	local deg = math.deg(rad)
 	deg = 90 - deg
 	deg = math.min(45, deg)
+	--range: -deg to +deg
 
-	for i = 1, 8 do
-		local deg = math.random(deg*2) - deg
+	local n = 9 --number of sparks
+	local var = math.ceil(deg / n) --variance
+
+	for i = 0, n-1 do
+		local deg = (deg * 2 * i)/(n-1) - deg
+		if i ~= 0 and i ~= n-1 then
+			deg = deg + math.random(-var, var)
+		end
 		local vx, vy = util.rotateVec(vx, vy, deg)
-		local len = 60
+		local len = math.random(50, 100)
 		local spark = {
 			x0 = px, --origin
 			y0 = py,
@@ -434,7 +442,8 @@ function Gun:bulletImpactSparks(px, py, vx, vy, shape)
 			vy = vy,
 			t0 = 0, --startpoint
 			t1 = len, --endpoint
-			spd = math.random(600, 800),
+			tspd = len * 2, --catchup
+			spd = len * 10,
 			timer = 0.3,
 			dead = false,
 			color = {
@@ -444,17 +453,20 @@ function Gun:bulletImpactSparks(px, py, vx, vy, shape)
 				a = 1
 			}
 		}
+		spark.accel = spark.spd * 2
 		spark.maxTimer = spark.timer
 		spark.update = function(obj, dt)
 			obj.timer = math.max(0, obj.timer - dt)
-			obj.spd = math.max(200, obj.spd - 1000 * dt)
+			obj.spd = math.max(10, obj.spd - spark.accel * dt)
 			--startpoint will catch up to the endpoint
-			obj.t0 = obj.t0 + obj.spd * dt * 1.4
+			obj.t0 = obj.t0 + obj.spd * dt
 			obj.t1 = obj.t1 + obj.spd * dt
-
+			obj.t0 = obj.t0 + obj.tspd * dt / 2
+			obj.t1 = obj.t1 - obj.tspd * dt / 2
 			if obj.t0 > obj.t1 then
 				obj.dead = true
 			end
+
 
 			local c = obj.color
 			c.b = c.b - (2 * dt)

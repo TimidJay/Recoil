@@ -107,6 +107,28 @@ function PlayState:getAdjTiles(player)
 	return static
 end
 
+--returns a list of shapes that can be hit by a gun
+function PlayState:getRaycastShapes()
+	local shapes = {}
+	for _, block in ipairs(game.tiles) do
+		if block.shieldShape and not block.disabled then
+			table.insert(shapes, block.shieldShape)
+		end
+		if block.tangible then
+			table.insert(shapes, block.shape)
+		end
+	end
+	for _, w in pairs(game.walls) do
+		table.insert(shapes, w.shape)
+	end
+	for _, gate in pairs(game.gates) do
+		for _, s in ipairs(gate:getShapes()) do
+			table.insert(shapes, s)
+		end
+	end
+	return shapes
+end
+
 
 local function spriteOverlap(a, b)
 	local ax, ay, aw, ah = a.x, a.y, a.w/2, a.h/2
@@ -287,6 +309,9 @@ function PlayState:draw()
 	for _, t in ipairs(game.tiles) do
 		t:draw()
 		t:drawActuator()
+	end
+	for _, e in ipairs(game.enemies) do
+		e:draw()
 	end
 	self.player:draw()
 	for _, p in ipairs(game.particles) do

@@ -41,25 +41,32 @@ function ShieldBlock:createShieldShape()
 end
 
 function ShieldBlock:update(dt)
-	local oldStop = self.stop
-	self:fireLaser()
-	if self.stop ~= oldStop then
-		self:createShieldShape()
+	if not self.disabled then
+		local oldStop = self.stop
+		self:fireLaser()
+		if self.stop ~= oldStop then
+			self:createShieldShape()
+		end
 	end
 	Block.update(self, dt)
 end
 
 function ShieldBlock:draw()
-	love.graphics.setColor(0, 0, 1, 1)
-	love.graphics.setLineWidth(self.shieldWidth)
-	love.graphics.setLineStyle("smooth")
+	if not self.disabled then
+		love.graphics.setLineStyle("smooth")
 
-	local x0, y0 = self:getPos()
-	local x1 = x0 + self.stop * self.dj
-	local y1 = y0 + self.stop * self.di
+		local x0, y0 = self:getPos()
+		local x1 = x0 + self.stop * self.dj
+		local y1 = y0 + self.stop * self.di
 
-	love.graphics.line(x0, y0, x1, y1)
+		love.graphics.setColor(0, 0, 1, 1)
+		love.graphics.setLineWidth(self.shieldWidth)
+		love.graphics.line(x0, y0, x1, y1)
 
+		love.graphics.setColor(0, 1, 1, 1)
+		love.graphics.setLineWidth(self.shieldWidth - 3)
+		love.graphics.line(x0, y0, x1, y1)
+	end
 	love.graphics.setColor(1, 1, 1, 1)
 	Block.draw(self)
 end

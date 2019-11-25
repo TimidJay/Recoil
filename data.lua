@@ -4,7 +4,7 @@ data = {}
 data.tiles = {
 	--args will contain all arguments after the i, j params, if they exist
 	--editor is the displayed image for the level editor
-	block      = {class = Block     , args = {}, editor = {name = "Regular Block", imgstr = "brick", rect = nil}},
+	block = {class = Block, args = {}, editor = {name = "Regular Block", imgstr = "brick", rect = nil}},
 	deathblock = {class = DeathBlock, args = {}, editor = {name = "Death Block", imgstr = "death_brick", rect = nil}},
     switchblock = {class = SwitchBlock, args = {}, editor = {name = "Switch Block", imgstr = "bluebrick", rect = nil}},
 	laser1 = {class = LaserBlock, args = {"up"}, editor = {name = "Laser (Up)", imgstr = "laserblock", rect = rects.tile[1][1]}},
@@ -24,7 +24,18 @@ data.tiles = {
 	switch4 = {class = SwitchBlock, args = {"yellow"}, editor = {name = "Switch (Yellow)", imgstr = "switch_off", color = {1, 1, 0}}},
 }
 
+data.enemies = {
+	turret1 = {class = Turret, args = {"up"}, editor = {name = "Turret (Up)", imgstr = "turret_editor", deg = 0}},
+	turret2 = {class = Turret, args = {"right"}, editor = {name = "Turret (Right)", imgstr = "turret_editor", deg = 90}},
+	turret3 = {class = Turret, args = {"down"}, editor = {name = "Turret (Down)", imgstr = "turret_editor", deg = 180}},
+	turret4 = {class = Turret, args = {"left"}, editor = {name = "Turret (Left)", imgstr = "turret_editor", deg = 270}},
+}
+
 --each value should also contain its own key
 for k, v in pairs(data.tiles) do
+	v.key = k
+end
+
+for k, v in pairs(data.enemies) do
 	v.key = k
 end

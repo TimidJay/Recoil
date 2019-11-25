@@ -40,8 +40,13 @@ function EditorState:initialize()
 	--holes can be added to the bottom wall
 	self.pit = {} --work in progress
 
-	self.selectedTile = "block"
-	self.selectedActuator = nil
+	--new
+	self.selectedType = "tile"
+	self.selectedValue = "block"
+
+	--old
+	-- self.selectedTile = "block"
+	-- self.selectedActuator = nil
 
 	--gui stuff
 	self.frames = {}
@@ -115,8 +120,22 @@ function EditorState:initialize()
 		local button = loveframes.Create("button", frame)
 		button:SetText(tileData.editor.name)
 		button.OnClick = function(obj, x, y)
-			self.selectedTile = key
-			self.selectedActuator = nil
+			-- self.selectedTile = key
+			-- self.selectedActuator = nil
+
+			self:select("tile", key)
+		end
+		flist:AddItem(button)
+	end
+
+	--temorary turret buttons
+	for i = 1, 4 do
+		local key = "turret"..i
+		local enemyData = data.enemies[key]
+		local button = loveframes.Create("button", frame)
+		button:SetText(enemyData.editor.name)
+		button.OnClick = function(obj, x, y)
+			self:select("enemy", key)
 		end
 		flist:AddItem(button)
 	end
@@ -148,11 +167,20 @@ function EditorState:initialize()
 	end
 	choice:SetChoice("red")
 	choice.OnChoiceSelected = function(obj, col)
-		if self.selectedActuator then
-			self.selectedActuator = col
-		else
-			local key = self.selectedTile
-			if key:sub(1, 6) == "switch" then
+		--update switch/actuator selection
+		-- if self.selectedActuator then
+		-- 	self.selectedActuator = col
+		-- else
+		-- 	local key = self.selectedTile
+		-- 	if key:sub(1, 6) == "switch" then
+		-- 		self.selectedTile = colors[col]
+		-- 	end
+		-- end
+
+		if self.selectedType == "actuator" then
+			self.selectedValue = col
+		elseif self.selectedType == "tile" then
+			if self.selectedTile:sub(1, 6) == "switch" then
 				self.selectedTile = colors[col]
 			end
 		end
@@ -164,8 +192,10 @@ function EditorState:initialize()
 	button1.OnClick = function(obj, x, y)
 		local col = choice:GetChoice()
 		local key = colors[col]
-		self.selectedTile = key
-		self.selectedActuator = nil
+		-- self.selectedTile = key
+		-- self.selectedActuator = nil
+
+		self:select("tile", key)
 	end
 
 	local button2 = loveframes.Create("button", frame)
@@ -173,7 +203,9 @@ function EditorState:initialize()
 	button2:SetPos(110, 80)
 	button2.OnClick = function(obj, x, y)
 		local col = choice:GetChoice()
-		self.selectedActuator = col
+		-- self.selectedActuator = col
+
+		self:select("actuator", col)
 	end
 
 	self.frames.switch = frame
@@ -206,7 +238,6 @@ function EditorState:initialize()
 		self.frames.switch:SetVisible(true)
 	end
 	button:SetState("EditorState")
-
 end
 
 function EditorState:close()
@@ -218,6 +249,12 @@ function EditorState:reset()
 		n:clear()
 	end
 	self.pit = {}
+end
+
+--possible types: "tile", "enemy", "actuator"
+function EditorState:select(objType, value)
+	self.selectedType = objType
+	self.selectedValue = value
 end
 
 --global function for easier access
@@ -360,8 +397,6 @@ function EditorState:update(dt)
 	local mx, my = mouse.x, mouse.y
 	local mi, mj = getGridPos(mx, my)
 
-	
-
 	if keys.escape then
 
 		self:startTest()
@@ -374,7 +409,7 @@ function EditorState:update(dt)
 
 	--don't interact with background if mouse is in a gui
 	for k, f in pairs(self.frames) do
-		if EditorState.containMouse(f) then
+		if f:GetVisible() and EditorState.containMouse(f) then
 			return 
 		end
 	end
@@ -421,11 +456,12 @@ function EditorState:update(dt)
 			node.highlight = true
 
 			if mouse.m1 then
-				if self.selectedActuator then
-					node:setActuator(self.selectedActuator)
-				else
-					node:setTile(self.selectedTile)
-				end
+				node:setObject(self.selectedType, self.selectedValue)
+				-- if self.selectedActuator then
+				-- 	node:setActuator(self.selectedActuator)
+				-- else
+				-- 	node:setTile(self.selectedTile)
+				-- end
 			elseif mouse.m2 then
 				node:clear()
 			end
@@ -464,11 +500,12 @@ function EditorState:update(dt)
 			elseif self.clicked then
 				for _, node in ipairs(self.selectedNodes) do
 					if self.clicked.mode == 1 then
-						if self.selectedActuator then
-							node:setActuator(self.selectedActuator)
-						else
-							node:setTile(self.selectedTile)
-						end
+						node:setObject(self.selectedType, self.selectedValue)
+						-- if self.selectedActuator then
+						-- 	node:setActuator(self.selectedActuator)
+						-- else
+						-- 	node:setTile(self.selectedTile)
+						-- end
 					else
 						node:clear()
 					end
@@ -492,8 +529,12 @@ end
 -- switches the game to test mode
 function EditorState:startTest()
 	for _, n in ipairs(self.allNodes) do
-		if n.tile and not self.overlap[n.i][n.j] then
-			table.insert(game.tiles, n:makeTile())
+		if not self.overlap[n.i][n.j] then
+			if n.tile then
+				table.insert(game.tiles, n:makeTile())
+			elseif n.enemy then
+				table.insert(game.enemies, n:makeEnemy())
+			end
 		end
 	end
 
@@ -586,12 +627,23 @@ function GridNode:initialize(editorstate, i, j)
 	self.x = config.wall_l + (j-0.5)*config.cell_w
 	self.y = config.ceil + (i-0.5)*config.cell_h
 	self.w, self.h = config.cell_w, config.cell_h
+
+	self.tile = nil
+	self.enemy = nil
 	self.actuator = nil
 	self.highlight = false
 end
 
 function GridNode:setTile(tileKey)
+	--tiles and enemies can't occupy the same space
 	self.tile = data.tiles[tileKey]
+	self.enemy = nil
+end
+
+function GridNode:setEnemy(enemyKey)
+	self.tile = nil
+	self.enemy = data.enemies[enemyKey]
+	self.acuator = nil
 end
 
 function GridNode:setActuator(value)
@@ -605,8 +657,20 @@ function GridNode:setActuator(value)
 	end
 end
 
+--generic setter function that combines the above functions
+function GridNode:setObject(objType, value)
+	if objType == "tile" then
+		self:setTile(value)
+	elseif objType == "enemy" then
+		self:setEnemy(value)
+	elseif objType == "actuator" then
+		self:setActuator(value)
+	end
+end
+
 function GridNode:clear()
 	self.tile = nil
+	self.enemy = nil
 	self.actuator = nil
 end
 
@@ -620,6 +684,15 @@ function GridNode:makeTile()
 	return tile
 end
 
+function GridNode:makeEnemy()
+	if not self.enemy then return nil end
+
+	local class = self.enemy.class
+	local args = self.enemy.args
+	local enemy = class:new(self.i, self.j, unpack(args))
+	return enemy
+end
+
 function GridNode:draw()
 	if self.tile then
 		local t = self.tile.editor
@@ -629,6 +702,14 @@ function GridNode:draw()
 			love.graphics.setColor(1, 1, 1, 1)
 		end
 		draw(t.imgstr, t.rect, self.x, self.y, 0, self.w, self.h)
+	end
+	if self.enemy then
+		local t = self.enemy.editor
+		local rad = 0
+		if t.deg then
+			rad = math.rad(t.deg)
+		end
+		draw(t.imgstr, t.rect, self.x, self.y, rad, self.w, self.h)
 	end
 	if self.actuator then
 		love.graphics.setColor(unpack(self.actuatorColor))

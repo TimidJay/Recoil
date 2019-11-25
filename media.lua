@@ -236,6 +236,8 @@ loadImage("redbrick", "media/redbrick.png")
 loadImage("switch_on", "media/switch_on.png")
 loadImage("switch_off", "media/switch_off.png")
 loadImage("actuator", "media/actuator.png")
+loadImage("turret", "media/turret.png")
+loadImage("turret_editor", "media/turret_editor.png")
 
 --quads are required to be tied to an image
 --rects are just simple tables with (x, y, w, h)

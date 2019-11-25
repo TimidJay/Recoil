@@ -17,6 +17,8 @@ function LaserBlock:initialize(i, j, dir)
 	self.di = t.di
 	self.dj = t.dj
 	self.stop = 0
+
+	self.disabled = false
 end
 --scan the blocks in front of the laserblock to
 --determine when the laser should stop
@@ -52,23 +54,31 @@ function LaserBlock:shootPlayer()
 	end
 end
 
+function LaserBlock:onTrigger()
+	self.disabled = not self.disabled
+end
+
 function LaserBlock:update(dt)
-	self:fireLaser()
-	self:shootPlayer()
+	if not self.disabled then
+		self:fireLaser()
+		self:shootPlayer()
+	end
 	Block.update(self, dt)
 end
 
 function LaserBlock:draw()
-	love.graphics.setColor(1, 0, 0, 1)
-	love.graphics.setLineWidth(5)
-	love.graphics.setLineStyle("smooth")
+	if not self.disabled then
+		love.graphics.setColor(1, 0, 0, 1)
+		love.graphics.setLineWidth(5)
+		love.graphics.setLineStyle("smooth")
 
-	local x0, y0 = self:getPos()
-	local x1 = x0 + self.stop * self.dj
-	local y1 = y0 + self.stop * self.di
+		local x0, y0 = self:getPos()
+		local x1 = x0 + self.stop * self.dj
+		local y1 = y0 + self.stop * self.di
 
-	love.graphics.line(x0, y0, x1, y1)
+		love.graphics.line(x0, y0, x1, y1)
 
-	love.graphics.setColor(1, 1, 1, 1)
+		love.graphics.setColor(1, 1, 1, 1)
+	end
 	Block.draw(self)
 end
