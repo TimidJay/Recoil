@@ -54,10 +54,6 @@ function Turret:updateShape()
 	end
 end
 
-function Turret:isDead()
-	return self.dead
-end
-
 function Turret:onBulletHit()
 	self.dead = true
 end

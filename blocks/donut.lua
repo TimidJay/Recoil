@@ -4,6 +4,7 @@ DonutBlock=class("DonutBlock",Block)
 --TODO: determine some nice speeds
 function DonutBlock:initialize(i,j,spd)
 	Block.initialize(self,i,j)
+	self.imgstr = "donut"
 	self.speed=spd or 100
 	self.falling=false
 	self.initX=self.x

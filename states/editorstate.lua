@@ -140,6 +140,14 @@ function EditorState:initialize()
 		flist:AddItem(button)
 	end
 
+	local button = loveframes.Create("button", frame)
+	local itemData = data.items["ammo"]
+	button:SetText(itemData.editor.name)
+	button.OnClick = function(obj, x, y)
+		self:select("item", "ammo")
+	end
+	flist:AddItem(button)
+
 	self.frames.tile = frame
 
 	--switch stuff
@@ -300,6 +308,15 @@ function EditorState:saveLevel(filename)
 	end
 	file:write("}\n")
 
+	file:write("level.items = {\n")
+	for _, n in ipairs(self.allNodes) do
+		if n.item then
+			local line = "\t{"..n.i..", "..n.j..", \""..n.item.key.."\"},\n"
+			file:write(line)
+		end
+	end
+	file:write("}\n")
+
 	local enter, exit = self.gates.enter, self.gates.exit
 	file:write("level.gates = {\n")
 	file:write("\tenter = {"..enter.i..", "..enter.j..", \""..enter.dir.."\"},\n")
@@ -346,11 +363,21 @@ function EditorState:loadLevel(filename, isPushed)
 		node:setTile(key)
 		node:setActuator(actuator)
 	end
-	for _, t in ipairs(level.enemies) do
-		local i, j = t[1], t[2]
-		local key = t[3]
-		local node = self.grid[i][j]
-		node:setEnemy(key)
+	if level.enemies then
+		for _, t in ipairs(level.enemies) do
+			local i, j = t[1], t[2]
+			local key = t[3]
+			local node = self.grid[i][j]
+			node:setEnemy(key)
+		end
+	end
+	if level.items then
+		for _, t in ipairs(level.items) do
+			local i, j = t[1], t[2]
+			local key = t[3]
+			local node = self.grid[i][j]
+			node:setItem(key)
+		end
 	end
 	for k, gate in pairs(self.gates) do
 		local t = level.gates[k]
@@ -553,6 +580,8 @@ function EditorState:startTest()
 				table.insert(game.tiles, n:makeTile())
 			elseif n.enemy then
 				table.insert(game.enemies, n:makeEnemy())
+			elseif n.item then
+				table.insert(game.items, n:makeItem())
 			end
 		end
 	end
@@ -649,6 +678,7 @@ function GridNode:initialize(editorstate, i, j)
 
 	self.tile = nil
 	self.enemy = nil
+	self.item = nil
 	self.actuator = nil
 	self.highlight = false
 end
@@ -657,12 +687,21 @@ function GridNode:setTile(tileKey)
 	--tiles and enemies can't occupy the same space
 	self.tile = data.tiles[tileKey]
 	self.enemy = nil
+	self.item = nil
 end
 
 function GridNode:setEnemy(enemyKey)
 	self.tile = nil
 	self.enemy = data.enemies[enemyKey]
 	self.acuator = nil
+	self.item = nil
+end
+
+function GridNode:setItem(itemKey)
+	self.tile = nil
+	self.enemy = nil
+	self.actuator = nil
+	self.item = data.items[itemKey]
 end
 
 function GridNode:setActuator(value)
@@ -682,6 +721,8 @@ function GridNode:setObject(objType, value)
 		self:setTile(value)
 	elseif objType == "enemy" then
 		self:setEnemy(value)
+	elseif objType == "item" then
+		self:setItem(value)
 	elseif objType == "actuator" then
 		self:setActuator(value)
 	end
@@ -690,6 +731,7 @@ end
 function GridNode:clear()
 	self.tile = nil
 	self.enemy = nil
+	self.item = nil
 	self.actuator = nil
 end
 
@@ -712,6 +754,15 @@ function GridNode:makeEnemy()
 	return enemy
 end
 
+function GridNode:makeItem()
+	if not self.item then return nil end
+
+	local class = self.item.class
+	local args = self.item.args
+	local item = class:new(self.i, self.j, unpack(args))
+	return item
+end
+
 function GridNode:draw()
 	if self.tile then
 		local t = self.tile.editor
@@ -729,6 +780,14 @@ function GridNode:draw()
 			rad = math.rad(t.deg)
 		end
 		draw(t.imgstr, t.rect, self.x, self.y, rad, self.w, self.h)
+	end
+	if self.item then
+		local t = self.item.editor
+		local w, h = self.w, self.h
+		if t.w and t.h then
+			w, h = t.w, t.h
+		end
+		draw(t.imgstr, t.rect, self.x, self.y, 0, w, h)
 	end
 	if self.actuator then
 		love.graphics.setColor(unpack(self.actuatorColor))

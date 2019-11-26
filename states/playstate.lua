@@ -257,6 +257,16 @@ function PlayState:update(dt)
 		end
 	end
 
+	--Player collision with items
+
+	for _, item in ipairs(game.items) do
+		local check, dx, dy = item:checkSpriteCollision(player)
+		if check then
+			item:onPlayerHit(player)
+		end
+	end
+
+
 	--Player collision with gates
 	for _, gate in pairs(game.gates) do
 		local check, dx, dy = gate:checkPlayerCollision(player)
@@ -319,6 +329,9 @@ function PlayState:draw()
 	end
 	for _, p in ipairs(game.projectiles) do
 		p:draw()
+	end
+	for _, it in ipairs(game.items) do
+		it:draw()
 	end
 	game.gates.enter:draw()
 	game.gates.exit:draw()

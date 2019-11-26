@@ -16,8 +16,7 @@ data.tiles = {
 	shield3 = {class = ShieldBlock, args = {"down"}, editor = {name = "Shield (Down)", imgstr = "shieldblock", rect = rects.tile[1][3]}},
 	shield4 = {class = ShieldBlock, args = {"left"}, editor = {name = "Shield (Left)", imgstr = "shieldblock", rect = rects.tile[1][4]}},
 	fallingblock = {class = FallingBlock, args = {}, editor = {name = "Falling Block", imgstr = "fallingblock", rect = nil}},
-	--donutblock has no sprite for now so keeping it on default block sprite
-	donutblock = {class=DonutBlock, args={}, editor = {name = "Donut Block", imgstr = "brick", rect=nil}},
+	donutblock = {class=DonutBlock, args={}, editor = {name = "Donut Block", imgstr = "donut", rect=nil}},
 	switch1 = {class = SwitchBlock, args = {"red"}, editor = {name = "Switch (Red)", imgstr = "switch_off", color = {1, 0, 0}}},
 	switch2 = {class = SwitchBlock, args = {"green"}, editor = {name = "Switch (Green)", imgstr = "switch_off", color = {0, 1, 0}}},
 	switch3 = {class = SwitchBlock, args = {"blue"}, editor = {name = "Switch (Blue)", imgstr = "switch_off", color = {0, 0, 1}}},
@@ -31,11 +30,19 @@ data.enemies = {
 	turret4 = {class = Turret, args = {"left"}, editor = {name = "Turret (Left)", imgstr = "turret_editor", deg = 270}},
 }
 
+data.items = {
+	ammo = {class = Ammo, args = {}, editor = {name = "Ammo", imgstr = "bullet", w = 30, h = 15}}
+}
+
 --each value should also contain its own key
 for k, v in pairs(data.tiles) do
 	v.key = k
 end
 
 for k, v in pairs(data.enemies) do
+	v.key = k
+end
+
+for k, v in pairs(data.items) do
 	v.key = k
 end

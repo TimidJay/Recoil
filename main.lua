@@ -126,6 +126,7 @@ function love.load(arg)
 	require("player")
 	require("gate")
 	require("turret")
+	require("ammo")
 
 	require("blocks/block")
 	require("blocks/death_block")
