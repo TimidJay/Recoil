@@ -235,24 +235,7 @@ function Gun:fire()
 
 	--get all the collision shapes first
 	--could make a function out of this
-	local tmin = math.huge
-	-- local shapes = {}
-	-- for _, block in ipairs(game.tiles) do
-	-- 	if block.shieldShape and not block.disabled then
-	-- 		table.insert(shapes, block.shieldShape)
-	-- 	end
-	-- 	if block.tangible then
-	-- 		table.insert(shapes, block.shape)
-	-- 	end
-	-- end
-	-- for _, w in pairs(game.walls) do
-	-- 	table.insert(shapes, w.shape)
-	-- end
-	-- for _, gate in pairs(game.gates) do
-	-- 	for _, s in ipairs(gate:getShapes()) do
-	-- 		table.insert(shapes, s)
-	-- 	end
-	-- end
+	
 	local shapes = playstate:getRaycastShapes()
 
 	--check for obstruction
@@ -272,6 +255,7 @@ function Gun:fire()
 	if obstructed then return end
 
 	--do the raycast
+	local tmin = math.huge
 	local hitShape = nil
 	for _, shape in ipairs(shapes) do
 		local check, t = shape:intersectsRay(mp.x, mp.y, dx, dy)
@@ -282,6 +266,21 @@ function Gun:fire()
 	end
 	local tx, ty = mp.x + dx*tmin, mp.y + dy*tmin --shot location
 	--the raycast should always hit something since the player is in an enclosed room
+
+	--these shapes will be pierced
+	local pierceShapes = {}
+	for _, e in ipairs(game.enemies) do
+		table.insert(pierceShapes, e.shape)
+	end
+
+	for _, shape in pairs(pierceShapes) do
+		local check, t = shape:intersectsRay(mp.x, mp.y, dx, dy)
+		if check and t > 0 and t < tmin then
+			if shape.sprite then
+				shape.sprite:onBulletHit()
+			end
+		end
+	end
 
 	--notify object if it exists
 	local sprite = hitShape.sprite

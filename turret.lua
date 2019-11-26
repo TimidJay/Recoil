@@ -24,6 +24,7 @@ function Turret:initialize(i, j, dir)
 	Sprite.initialize(self, "turret", turret_rect[1], 30, 30, x, y)
 	self.dir = dir
 	self:setAngle(math.rad(dir_table[dir]))
+	self:setShape(shapes.newCircleShape(0, 0, 15))
 
 	self.state = "idle" --"idle", "lockon", "firing"
 
@@ -42,6 +43,23 @@ function Turret:initialize(i, j, dir)
 	self.lockOnTimer = 0
 	self.fireDelayMax = 0.1
 	self.fireDelay = 0
+end
+
+function Turret:updateShape()
+	if self.shape then
+		local dx, dy = 0, 12
+		dx, dy = util.rotateVec2(dx, dy, self.angle)
+		self.shape:moveTo(self.x + dx, self.y + dy)
+		self.shape:setRotation(self.angle)
+	end
+end
+
+function Turret:isDead()
+	return self.dead
+end
+
+function Turret:onBulletHit()
+	self.dead = true
 end
 
 --aim at player
@@ -109,7 +127,7 @@ function Turret:fire()
 	--do the raycast
 	local tmin, tplayer = self:raycast(mpx, mpy, dx, dy)
 
-	-- if tplayer then playstate.player.dead = true end
+	if tplayer then playstate.player.dead = true end
 
 	local bullet = {
 		x0 = mpx,
@@ -187,4 +205,6 @@ function Turret:draw()
 	end
 
 	self.gun:draw()
+
+	-- self.shape:draw()
 end

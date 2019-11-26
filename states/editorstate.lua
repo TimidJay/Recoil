@@ -257,6 +257,10 @@ function EditorState:select(objType, value)
 	self.selectedValue = value
 end
 
+function openSaveDirectory()
+	love.system.openURL("file://"..love.filesystem.getSaveDirectory())
+end
+
 --global function for easier access
 function saveLevel(filename)
 	if game:top() ~= editorstate then
@@ -282,6 +286,15 @@ function EditorState:saveLevel(filename)
 				line = line..", \""..n.actuator.."\""
 			end
 			line = line.."},\n"
+			file:write(line)
+		end
+	end
+	file:write("}\n")
+
+	file:write("level.enemies = {\n")
+	for _, n in ipairs(self.allNodes) do
+		if n.enemy then
+			local line = "\t{"..n.i..", "..n.j..", \""..n.enemy.key.."\"},\n"
 			file:write(line)
 		end
 	end
@@ -332,6 +345,12 @@ function EditorState:loadLevel(filename, isPushed)
 		local node = self.grid[i][j]
 		node:setTile(key)
 		node:setActuator(actuator)
+	end
+	for _, t in ipairs(level.enemies) do
+		local i, j = t[1], t[2]
+		local key = t[3]
+		local node = self.grid[i][j]
+		node:setEnemy(key)
 	end
 	for k, gate in pairs(self.gates) do
 		local t = level.gates[k]
