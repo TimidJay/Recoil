@@ -50,5 +50,5 @@ end
 -- TODO: figure out how to move block until it hits ground
 -- TODO: check for other blocks
 function FallingBlock:fall(player)
-	self.vy = 10--650
+	self.vy = 650
 end
