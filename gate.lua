@@ -92,7 +92,7 @@ function Gate:ejectPlayer(player)
 	player:setPos(self:getPos())
 	local vtable = {
 		up = {0, 100},
-		down = {0, -600},
+		down = {0, -800},
 		left = {300, 0},
 		right = {-300, 0}
 	}

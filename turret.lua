@@ -26,7 +26,7 @@ function Turret:initialize(i, j, dir)
 	self:setAngle(math.rad(dir_table[dir]))
 	self:setShape(shapes.newCircleShape(0, 0, 15))
 
-	self.state = "idle" --"idle", "lockon", "firing"
+	self.state = "idle" --"idle", "lockon", "preparing", "firing"
 
 	local off = offset_table[dir]
 	self.offx, self.offy = off[1], off[2]
@@ -43,6 +43,8 @@ function Turret:initialize(i, j, dir)
 	self.lockOnTimer = 0
 	self.fireDelayMax = 0.1
 	self.fireDelay = 0
+	self.flash = false
+	self.flashTimer = 0
 end
 
 function Turret:updateShape()
@@ -106,7 +108,9 @@ end
 
 --fire a laser shot at the player with some spread
 function Turret:fire()
-	local dx, dy = self.aim_dx, self.aim_dy
+	local rad = self.gun.angle - math.pi/2
+	-- local dx, dy = self.aim_dx, self.aim_dy
+	local dx, dy = math.cos(rad), math.sin(rad)
 
 	--get muzzle point
 	local mlen = 14
@@ -156,9 +160,40 @@ function Turret:fire()
 
 end
 
+--rotate gun to target angle with limited angular velocity
+Turret.turn_speed = 1
+function Turret:rotateTo(target, dt)
+	local gun = self.gun
+	local initial = self.gun.angle
+
+	if math.abs(initial - target) < math.pi then
+		if initial < target then
+			sign = 1
+		else
+			sign = -1
+		end
+	else
+		if initial < target then
+			sign = -1
+		else
+			sign = 1
+		end
+	end
+
+	local theta = initial + sign * Turret.turn_speed * dt
+	if theta < 0 then
+		theta = theta + 2*math.pi
+	elseif theta >= 2*math.pi then
+		theta = theta - 2*math.pi
+	end
+	gun.angle = theta
+end
+
 function Turret:update(dt)
 	Sprite.update(self, dt)
 	self:aim()
+	local target = -math.atan2(self.aim_dx, self.aim_dy) + math.pi
+	print(target)
 	local tmin, tplayer = self:raycast()
 	if tplayer then
 		--lock on!
@@ -171,13 +206,33 @@ function Turret:update(dt)
 				self:fire()
 				self.fireDelay = self.fireDelayMax + self.fireDelay
 			end
+			self:rotateTo(target, dt)
+		elseif self.lockOnTimer >= self.lockOnTimerMax * 0.66 then
+			self.state = "preparing"
+			if not self.storedLockOn then
+				self.storedLockOn = {
+					dx = self.aim_dx,
+					dy = self.aim_dy,
+					len = self.aim_len
+				}
+			end
+			self.flashTimer = self.flashTimer - dt
+			if self.flashTimer <= 0 then
+				self.flash = not self.flash
+				self.flashTimer = self.flashTimer + 0.05
+			end
+			--gun angle should stay the same
+		else
+			self.gun.angle = target
 		end
-		self.gun.angle = -math.atan2(self.aim_dx, self.aim_dy) + math.pi
 	else
 		--no line of sight
 		self.state = "idle"
 		self.lockOnTimer = 0
 		self.fireDelay = 0
+		self.flash = false
+		self.flashTimer = 0
+		self.storedLockOn = nil
 	end
 	local gun = self.gun
 	-- gun.angle = gun.angle + 1 * dt
@@ -191,13 +246,30 @@ function Turret:draw()
 	Sprite.draw(self)
 
 	--draw aiming laser
-	if self.state == "lockon" then
-		love.graphics.setColor(1, 0, 0, 1)
+	if self.state == "lockon" or self.state == "preparing" then
+		if self.state == "preparing" then
+			if self.flash then
+				love.graphics.setColor(1, 0, 0, 1)
+			else
+				love.graphics.setColor(1, 0, 0, 0)
+			end
+		else
+			love.graphics.setColor(1, 0, 0, 1)
+		end
 		love.graphics.setLineWidth(2)
 		love.graphics.setLineStyle("smooth")
 		local x0, y0 = self.cx, self.cy
 		local x1, y1 = x0 + self.aim_dx * self.aim_len, y0 + self.aim_dy * self.aim_len
+		if self.state == "preparing" then
+			local sl = self.storedLockOn
+			x1, y1 = x0 + sl.dx * sl.len, y0 + sl.dy * sl.len
+		end
 		love.graphics.line(x0, y0, x1, y1)
+
+		if self.state == "preparing" then
+			love.graphics.setColor(1, 1, 1, 1)
+			draw("hitmarker", nil, x1, y1, 0, 10, 10)
+		end
 	end
 
 	self.gun:draw()

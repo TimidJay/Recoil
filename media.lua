@@ -238,6 +238,7 @@ loadImage("turret", "media/turret.png")
 loadImage("turret_editor", "media/turret_editor.png")
 loadImage("bullet", "media/bullettest1.png")
 loadImage("donut", "media/donutblock.png")
+loadImage("oneway", "media/oneway.png")
 
 --quads are required to be tied to an image
 --rects are just simple tables with (x, y, w, h)

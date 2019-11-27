@@ -114,6 +114,10 @@ function EditorState:initialize()
 		"shield2",
 		"shield3",
 		"shield4",
+		"oneway1",
+		"oneway2",
+		"oneway3",
+		"oneway4",
 	}
 	for i, key in ipairs(tileKeys) do
 		local tileData = data.tiles[key]
@@ -766,12 +770,16 @@ end
 function GridNode:draw()
 	if self.tile then
 		local t = self.tile.editor
+		local rad = 0
+		if t.deg then
+			rad = math.rad(t.deg)
+		end
 		if t.color then
 			love.graphics.setColor(unpack(t.color))
 		else
 			love.graphics.setColor(1, 1, 1, 1)
 		end
-		draw(t.imgstr, t.rect, self.x, self.y, 0, self.w, self.h)
+		draw(t.imgstr, t.rect, self.x, self.y, rad, self.w, self.h)
 	end
 	if self.enemy then
 		local t = self.enemy.editor

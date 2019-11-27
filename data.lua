@@ -17,6 +17,10 @@ data.tiles = {
 	shield4 = {class = ShieldBlock, args = {"left"}, editor = {name = "Shield (Left)", imgstr = "shieldblock", rect = rects.tile[1][4]}},
 	fallingblock = {class = FallingBlock, args = {}, editor = {name = "Falling Block", imgstr = "fallingblock", rect = nil}},
 	donutblock = {class=DonutBlock, args={}, editor = {name = "Donut Block", imgstr = "donut", rect=nil}},
+	oneway1 = {class = OneWayBlock, args = {"up"}, editor = {name = "One Way (Up)", imgstr = "oneway", deg = 0}},
+	oneway2 = {class = OneWayBlock, args = {"right"}, editor = {name = "One Way (Right)", imgstr = "oneway", deg = 90}},
+	oneway3 = {class = OneWayBlock, args = {"down"}, editor = {name = "One Way (Down)", imgstr = "oneway", deg = 180}},
+	oneway4 = {class = OneWayBlock, args = {"left"}, editor = {name = "One Way (Left)", imgstr = "oneway", deg = 270}},
 	switch1 = {class = SwitchBlock, args = {"red"}, editor = {name = "Switch (Red)", imgstr = "switch_off", color = {1, 0, 0}}},
 	switch2 = {class = SwitchBlock, args = {"green"}, editor = {name = "Switch (Green)", imgstr = "switch_off", color = {0, 1, 0}}},
 	switch3 = {class = SwitchBlock, args = {"blue"}, editor = {name = "Switch (Blue)", imgstr = "switch_off", color = {0, 0, 1}}},
@@ -31,7 +35,7 @@ data.enemies = {
 }
 
 data.items = {
-	ammo = {class = Ammo, args = {}, editor = {name = "Ammo", imgstr = "bullet", w = 30, h = 15}}
+	ammo = {class = Ammo, args = {}, editor = {name = "Ammo", imgstr = "bullet", w = 30, h = 30}}
 }
 
 --each value should also contain its own key
