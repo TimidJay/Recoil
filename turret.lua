@@ -45,6 +45,8 @@ function Turret:initialize(i, j, dir)
 	self.fireDelay = 0
 	self.flash = false
 	self.flashTimer = 0
+	self.suppressiveFireTimerMax = 1
+	self.suppressiveFireTimer = self.suppressiveFireTimerMax
 end
 
 function Turret:updateShape()
@@ -100,7 +102,7 @@ function Turret:raycast(x0, y0, dx, dy)
 	end
 
 	local check, tplayer = player.shape:intersectsRay(x0, y0, dx, dy)
-	if check and tplayer < tmin then
+	if check and tplayer > 0 and tplayer < tmin then
 		return tmin, tplayer
 	end
 	return tmin
@@ -197,6 +199,8 @@ function Turret:update(dt)
 	if tplayer then
 		--lock on!
 		self.state = "lockon"
+		self.lastTarget = target
+		self.suppressiveFireTimer = self.suppressiveFireTimerMax
 		self.lockOnTimer = self.lockOnTimer + dt
 		if self.lockOnTimer >= self.lockOnTimerMax then
 			self.state = "firing"
@@ -224,7 +228,37 @@ function Turret:update(dt)
 		else
 			self.gun.angle = target
 		end
+	elseif self.state == "preparing" or self.state == "firing" then
+		--supressive fire!!!
+		if self.state == "preparing" then
+			self.lockOnTimer = self.lockOnTimer + dt
+			if self.lockOnTimer >= self.lockOnTimerMax then
+				self.state = "firing"
+			end
+			self.flashTimer = self.flashTimer - dt
+			if self.flashTimer <= 0 then
+				self.flash = not self.flash
+				self.flashTimer = self.flashTimer + 0.05
+			end
+		end
+		if self.state == "firing" then
+			self.fireDelay = self.fireDelay - dt
+			if self.fireDelay <= 0 then
+				self:fire()
+				self.fireDelay = self.fireDelayMax + self.fireDelay
+			end
+			-- self:rotateTo(self.lastTarget, dt)
+			self.suppressiveFireTimer = self.suppressiveFireTimer - dt
+			if self.suppressiveFireTimer <= 0 then
+				self.state = "idle"
+			end
+		end
+		--if player comes back into view while suppresive fire,
+		--the turret will keep firing towards the player
 	else
+		self.state = "idle"
+	end
+	if self.state == "idle" then
 		--no line of sight
 		self.state = "idle"
 		self.lockOnTimer = 0
