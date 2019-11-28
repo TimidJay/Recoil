@@ -21,6 +21,18 @@ function Block:initialize(i, j)
 	self.actuator = nil --"red", "green", "blue", "yellow"
 end
 
+--if actuator has "_" at the beginning
+--then trigger the actuator once
+function Block:setActuator(actuator)
+	if not actuator then return end
+	if actuator:sub(1, 1) == "-" then
+		self.actuator = actuator:sub(2, -1)
+		self:onTrigger()
+	else
+		self.actuator = actuator
+	end
+end
+
 --checks to see if block's center is positioned exactly
 --in the grid's center
 function Block:isAlignedToGrid()

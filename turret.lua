@@ -193,7 +193,6 @@ function Turret:update(dt)
 	Sprite.update(self, dt)
 	self:aim()
 	local target = -math.atan2(self.aim_dx, self.aim_dy) + math.pi
-	print(target)
 	local tmin, tplayer = self:raycast()
 	if tplayer then
 		--lock on!

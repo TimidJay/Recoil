@@ -44,6 +44,8 @@ function EditorState:initialize()
 	self.selectedType = "tile"
 	self.selectedValue = "block"
 
+	self.actuatorCheck = false
+
 	--old
 	-- self.selectedTile = "block"
 	-- self.selectedActuator = nil
@@ -160,9 +162,9 @@ function EditorState:initialize()
 	frame.OnClose = hide
 	frame:SetName("Switch Blocks")
 	-- frame:ShowCloseButton(false)
-	frame:SetPos(window.w - 550, 80)
-	frame:SetWidth(200)
-	frame:SetHeight(120)
+	frame:SetPos(window.w - 600, 80)
+	frame:SetWidth(240)
+	frame:SetHeight(180)
 	frame:SetState("EditorState")
 
 	local choice = loveframes.Create("multichoice", frame)
@@ -191,9 +193,12 @@ function EditorState:initialize()
 
 		if self.selectedType == "actuator" then
 			self.selectedValue = col
+			if self.actuatorCheck then
+				self.selectedValue = "-"..self.selectedValue
+			end
 		elseif self.selectedType == "tile" then
-			if self.selectedTile:sub(1, 6) == "switch" then
-				self.selectedTile = colors[col]
+			if self.selectedValue:sub(1, 6) == "switch" then
+				self.selectedValue = colors[col]
 			end
 		end
 	end
@@ -216,11 +221,116 @@ function EditorState:initialize()
 	button2.OnClick = function(obj, x, y)
 		local col = choice:GetChoice()
 		-- self.selectedActuator = col
-
 		self:select("actuator", col)
+		if self.actuatorCheck then
+			self.selectedValue = "-"..self.selectedValue
+		end
+	end
+
+	
+
+	local check = loveframes.Create("checkbox", frame)
+	check:SetText("Set Triggered")
+	check:SetPos(110, 120)
+	check.OnChanged = function(obj, value)
+		self.actuatorCheck = value
+		if self.selectedType == "actuator" then
+			if value then
+				self.selectedValue = "-"..self.selectedValue
+			else
+				self.selectedValue = self.selectedValue:sub(2, -1)
+			end
+			print(self.selectedValue)
+		end
 	end
 
 	self.frames.switch = frame
+
+	--level bowser / manager
+	local frame = loveframes.Create("frame")
+	frame.OnClose = hide
+	frame:SetName("Level Browser")
+	frame:SetPos(window.w - 900, 80)
+	frame:SetWidth(250)
+	frame:SetHeight(500)
+	frame:SetState("EditorState")
+
+	local tabs = loveframes.Create("tabs", frame)
+	tabs:SetPos(10, 40)
+	tabs:SetWidth(200)
+
+	local textBox = loveframes.Create("textinput", frame)
+	textBox:SetPos(10, 420)
+	textBox:SetEditable(true)
+
+	local panel = loveframes.Create("panel")
+	panel.Draw = function() end --make it invisible
+
+	local panel2 = loveframes.Create("panel")
+	panel2.Draw = function() end
+
+	local fileList = loveframes.Create("columnlist", panel)
+	fileList:SetPos(0, 0)
+	fileList:SetSize(200, 340)
+	fileList:AddColumn("Filename")
+	fileList.refresh = function(obj)
+		obj:Clear()
+		local filenames = love.filesystem.getDirectoryItems("levels")
+		for _, name in ipairs(filenames) do
+			obj:AddRow(name)
+		end
+	end
+	fileList:refresh()
+	fileList:ResizeColumns()
+	fileList.OnRowClicked = function(obj, row, rowdata)
+		local filename = rowdata[1]
+		textBox:SetText(filename)
+	end
+
+	local fileList2 = loveframes.Create("columnlist", panel2)
+	fileList2:SetPos(0, 0)
+	fileList2:SetSize(200, 340)
+	fileList2:AddColumn("Filename")
+	fileList2.refresh = function(obj)
+		obj:Clear()
+		local filenames = love.filesystem.getDirectoryItems("pushedlevels")
+		for _, name in ipairs(filenames) do
+			obj:AddRow(name)
+		end
+	end
+	fileList2:refresh()
+	fileList2:ResizeColumns()
+	fileList2.OnRowClicked = function(obj, row, rowdata)
+		local filename = rowdata[1]
+		textBox:SetText(filename)
+	end
+
+	tabs:AddTab("Local Levels", panel)
+	tabs:AddTab("Pushed Levels", panel2)
+
+	local saveButton = loveframes.Create("button", frame)
+	saveButton:SetText("Save")
+	saveButton:SetPos(10, 460)
+	saveButton.OnClick = function(obj, x, y)
+		local filename = textBox:GetText()
+		if #filename > 0 then
+			saveLevel(filename)
+			fileList:refresh()
+		end
+	end
+
+	local loadButton = loveframes.Create("button", frame)
+	loadButton:SetText("Load")
+	loadButton:SetPos(100, 460)
+	loadButton.OnClick = function(obj, x, y)
+		local filename = textBox:GetText()
+		local pushed = (tabs:GetTabNumber() == 2)
+		if #filename > 0 then
+			loadLevel(filename, pushed)
+		end
+	end
+
+	self.frames.browser = frame
 
 	--summoning buttons to unhide "closed" frames
 
@@ -235,7 +345,7 @@ function EditorState:initialize()
 
 	local button = loveframes.Create("button")
 	button:SetText("Tiles Window")
-	button:SetPos(200, 0)
+	button:SetPos(190, 0)
 	button:SetSize(100, 20)
 	button.OnClick = function(obj, x, y)
 		self.frames.tile:SetVisible(true)
@@ -243,13 +353,24 @@ function EditorState:initialize()
 	button:SetState("EditorState")
 
 	local button = loveframes.Create("button")
-	button:SetText("Switches Window")
-	button:SetPos(320, 0)
-	button:SetSize(100, 20)
+	button:SetText("Switches/Actuators")
+	button:SetPos(300, 0)
+	button:SetSize(120, 20)
 	button.OnClick = function(obj, x, y)
 		self.frames.switch:SetVisible(true)
 	end
 	button:SetState("EditorState")
+
+	local button = loveframes.Create("button")
+	button:SetText("Save/Load")
+	button:SetPos(430, 0)
+	button:SetSize(100, 20)
+	button.OnClick = function(obj, x, y)
+		self.frames.browser:SetVisible(true)
+	end
+	button:SetState("EditorState")
+
+
 end
 
 function EditorState:close()
@@ -715,7 +836,7 @@ function GridNode:setActuator(value)
 	end
 	if self.tile then
 		self.actuator = value
-		self.actuatorColor = SwitchBlock.colors[self.actuator]
+		self.actuatorColor = SwitchBlock.colors[value]
 	end
 end
 
@@ -745,7 +866,7 @@ function GridNode:makeTile()
 	local class = self.tile.class
 	local args = self.tile.args
 	local tile = class:new(self.i, self.j, unpack(args))
-	tile.actuator = self.actuator
+	tile:setActuator(self.actuator)
 	return tile
 end
 

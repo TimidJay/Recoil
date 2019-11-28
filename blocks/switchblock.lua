@@ -4,7 +4,12 @@ SwitchBlock.colors = {
     red = {1, 0, 0},
     green = {0, 1, 0},
     blue = {0, 0, 1},
-    yellow = {1, 1, 0}
+    yellow = {1, 1, 0},
+    --colors for EditorState
+    ["-red"] = {1, 0.65, 0.65},
+    ["-green"] = {0.65, 1, 0.65},
+    ["-blue"] = {0.65, 0.65, 1},
+    ["-yellow"] = {1, 1, 0.65},
 }
 function SwitchBlock:initialize(i, j, switchColor)
     Block.initialize(self, i, j)

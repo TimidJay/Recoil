@@ -9,13 +9,6 @@ function DeathBlock:initialize(i, j)
 	self.imgstr = "death_brick"
 end
 
-
---check if player and block intersects
---also returns horizontal and vertical separation vectors
-function DeathBlock:checkPlayerCollision(player)
-	return self:checkSpriteCollision(player)
-end
-
 function DeathBlock:onPlayerHit(player)
 	player.dead = true
 end

@@ -89,6 +89,7 @@ end
 
 function love.textinput(t)
 	console.textinput(t)
+	loveframes.textinput(t)
 end
 
 local function executeImmediately(input)

@@ -27,6 +27,17 @@ data.tiles = {
 	switch4 = {class = SwitchBlock, args = {"yellow"}, editor = {name = "Switch (Yellow)", imgstr = "switch_off", color = {1, 1, 0}}},
 }
 
+--SwitchBlocks are generated because theres like 8 variants
+-- local colors = {"red", "green", "blue", "yellow"}
+-- for i = 1, 4 do
+-- 	for j = 1, 2 do
+-- 		local key = "switch"..(i + (j-1)*4)
+-- 		local v = {class = SwitchBlock}
+-- 		v.args = {colors[i], (j == 2)}
+-- 		name = "Switch ("..colors[i]..")"
+-- 	end
+-- end
+
 data.enemies = {
 	turret1 = {class = Turret, args = {"up"}, editor = {name = "Turret (Up)", imgstr = "turret_editor", deg = 0}},
 	turret2 = {class = Turret, args = {"right"}, editor = {name = "Turret (Right)", imgstr = "turret_editor", deg = 90}},
