@@ -19,8 +19,6 @@ function FallingBlock:update(dt)
 	end
 
 	self:checkBelow(playstate.player)
-	
-	self:onPlayerHit(playstate.player)
 
 	Block.update(self,dt)
 end

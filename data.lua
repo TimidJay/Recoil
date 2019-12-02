@@ -8,6 +8,7 @@ data.tiles = {
 	deathblock = {class = DeathBlock, args = {}, editor = {name = "Death Block", imgstr = "death_brick", rect = nil}},
     switchblock = {class = SwitchBlock, args = {}, editor = {name = "Switch Block", imgstr = "bluebrick", rect = nil}},
     shootblock = {class = ShootBlock, args = {}, editor = {name = "Shoot Block", imgstr = "shootBlock1", rect = nil}},
+    bounceblock1 = {class = BounceBlock1, args = {}, editor = {name = "Bounce Block 1", imgstr = "bounceblock1", rect = nil}},
 	laser1 = {class = LaserBlock, args = {"up"}, editor = {name = "Laser (Up)", imgstr = "laserblock", rect = rects.tile[1][1]}},
 	laser2 = {class = LaserBlock, args = {"right"}, editor = {name = "Laser (Right)", imgstr = "laserblock", rect = rects.tile[1][2]}},
 	laser3 = {class = LaserBlock, args = {"down"}, editor = {name = "Laser (Down)", imgstr = "laserblock", rect = rects.tile[1][3]}},

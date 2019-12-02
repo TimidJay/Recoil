@@ -109,6 +109,7 @@ function EditorState:initialize()
 		"fallingblock",
 		"donutblock",
 		"shootblock",
+		"bounceblock1",
 		"laser1",
 		"laser2",
 		"laser3",
