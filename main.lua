@@ -137,6 +137,7 @@ function love.load(arg)
 	require("blocks/donut")
     require("blocks/switchblock")
     require("blocks/onewayblock")
+    require("blocks/shootblock")
 
 	require("data")
 
