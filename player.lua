@@ -191,6 +191,7 @@ function Gun:setMuzzlePoint()
 end
 
 function Gun:canFire()
+	if self.player.helpless then return false end
 	if self.state ~= "ready" then return false end
 	if mouse.m1 ~= 1 then return false end
 	return true

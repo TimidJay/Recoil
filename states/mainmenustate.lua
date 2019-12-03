@@ -15,7 +15,7 @@ function MainMenuState:initialize()
 
 	local playButton = make_button("Play", cx, cy, 100, 30)
 	playButton.OnClick = function(obj, x, y)
-		print("WIP")
+		game:push(LevelSelectState:new())
 	end
 	
 	local editButton = make_button("Level Editor", cx, cy + 40, 100, 30)
