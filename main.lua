@@ -41,6 +41,22 @@ _G["print"] = function(...)
 	console.i(...)
 end
 
+--call this instead of love.window.setFullscreen
+fullscreen = nil
+function setFullscreen(value)
+	if value then
+		love.window.setFullscreen(true)
+		local dw, dh = love.window.getDesktopDimensions()
+		fullscreen = {
+			dx = (dw - window.w) / 2,
+			dy = (dh - window.h) / 2
+		}
+	else
+		love.window.setFullscreen(false)
+		fullscreen = nil
+	end
+end
+
 --does not do bound checking
 function getGridPos(x, y)
 	local i = math.floor((y - config.ceil) / config.cell_h)
@@ -87,6 +103,18 @@ function love.mousereleased(x, y, button)
 	loveframes.mousereleased(x, y, button)
 end
 
+--offset the mouse coordinates when fullscreen
+local superMousePos = love.mouse.getPosition
+love.mouse.getPosition = function()
+	local x, y = superMousePos()
+	if fullscreen then
+		fs = fullscreen
+		x = x - fs.dx
+		y = y - fs.dy
+	end
+	return x, y
+end
+
 function love.textinput(t)
 	console.textinput(t)
 	loveframes.textinput(t)
@@ -122,6 +150,7 @@ function love.load(arg)
 	require("game")
 	require("states/playstate")
 	require("states/editorstate")
+	require("states/mainmenustate")
 	require("media")
 	require("sprite")
 	require("player")
@@ -144,7 +173,7 @@ function love.load(arg)
 	require("data")
 
 	game:initialize()
-	game:push(EditorState:new())
+	game:push(MainMenuState:new())
 end
 
 time_scale = 1
@@ -209,6 +238,12 @@ function love.update(dt)
 end
 
 function love.draw()
+	if fullscreen then
+		local fs = fullscreen
+		love.graphics.translate(fs.dx, fs.dy)
+		love.graphics.setScissor(fs.dx, fs.dy, window.w, window.h)
+	end
+
 	local ss = screen_shake
 	if ss.on then
 		local dx, dy = util.rotateVec(0, ss.mag, math.random(360))
@@ -225,4 +260,8 @@ function love.draw()
 
 	loveframes.draw()
 	console.draw()
+
+	if fullscreen then
+		love.graphics.setScissor()
+	end
 end

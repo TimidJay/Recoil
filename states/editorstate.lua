@@ -373,7 +373,14 @@ function EditorState:initialize()
 	end
 	button:SetState("EditorState")
 
-
+	--exit button
+	local buttton = loveframes.Create("button")
+	button:SetText("Main Menu")
+	button:SetPos(window.w - 150, 0)
+	button:SetSize(100, 20)
+	button.OnClick = function(obj, x, y)
+		game:pop()
+	end
 end
 
 function EditorState:close()
