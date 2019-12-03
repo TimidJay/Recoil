@@ -254,6 +254,7 @@ function PlayState:update(dt)
 		if check and player:validCollision(dx, dy) then
 			t:onPlayerHit(player)
 			player:handleCollision(dx, dy)
+			if t.onPlayerHit2 then t:onPlayerHit2(player) end --temporary
 		end
 	end
 

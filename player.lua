@@ -389,17 +389,37 @@ function Gun:bulletImpactSparks(px, py, vx, vy, shape)
 	--vector reflects vertically or horizontally based on
 	--impact point's relative position to the shape's center
 	local cx, cy = shape:center()
-	local dx, dy = cx - px, cy - py
-	local dxa, dya = math.abs(dx), math.abs(dy)
 	local nx, ny
-	if dya > dxa then
-		vx, vy = vx, -vy
-		nx = 0
-		ny = (dy > 0) and -1 or 1
+
+	local x0, y0, x1, y1 = shape:bbox()
+	local li = {x0 - px, x1 - px, y0 - py, y1 - py}
+	local minIndex = 1
+	local minValue = math.abs(li[1])
+	for i, v in ipairs(li) do
+		v = math.abs(v)
+		if v < minValue then
+			minIndex = i
+			minValue = v
+		end
+	end
+
+	if minIndex == 1 then
+		nx, ny = -1, 0
+	elseif minIndex == 2 then
+		nx, ny = 1, 0
+	elseif minIndex == 3 then
+		nx, ny = 0, -1
+	elseif minIndex == 4 then
+		nx, ny = 0, 1
+	end
+
+	print(nx.." "..ny)
+
+
+	if nx == 0 then
+		vy = -vy
 	else
-		vx, vy = -vx, vy
-		ny = 0
-		nx = (dx > 0) and -1 or 1
+		vx = -vx
 	end
 
 	local rad = util.angleBetween(vx, vy, nx, ny)
