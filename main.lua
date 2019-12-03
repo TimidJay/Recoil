@@ -139,6 +139,7 @@ function love.load(arg)
     require("blocks/onewayblock")
     require("blocks/shootblock")
     require("blocks/bounceblock1")
+    require("blocks/bounceblock2")
 
 	require("data")
 
