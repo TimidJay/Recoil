@@ -14,6 +14,19 @@ function DonutBlock:initialize(i,j,spd)
 	self.deltaY = 0
 end
 
+--taken from OneWayBlock, set to only check upwards collision
+function DonutBlock:checkPlayerCollision(player)
+	local norm = {0,-1}
+	local nx, ny = norm[1], norm[2]
+	local vx, vy = player:getVel()
+
+	local check, dx, dy = Block.checkPlayerCollision(self, player)
+	if check and (dx * nx + dy * ny > 0) then
+		return true, dx, dy
+	end
+	return false
+end
+
 function DonutBlock:checkPlayerOnTop()
 	local player=playstate.player
 	if Block.checkPlayerCollision(self,player) and player.touchingGround and (player.y+player.h/2)>=(self.y-self.h/2) and (player.x+player.w/2)<=(self.x+self.w/2) and (player.x-player.w/2)>=(self.x-self.w/2) then
