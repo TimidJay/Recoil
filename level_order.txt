@@ -10,7 +10,7 @@ FallingLevel3
 
 [EASY]
 easy_cliff.txt
-easy_falling_chain_reloads.MN
+easy_falling_chain_reloads_MN
 easy_falling_MN
 easyOptionalDonutJL
 easyDonutFallJL

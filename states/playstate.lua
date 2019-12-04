@@ -1,12 +1,18 @@
 PlayState = class("PlayState")
 
-function PlayState:initialize(mode)
+function PlayState:initialize(mode, filename)
 	playstate = self
 
 	self.className = "PlayState"
 
 	self.mode = mode or "play"
 	self.state = "playing" --playing, death, victory
+
+	if self.mode == "play" then
+		self:loadLevel(filename)
+		self.currentLevel = filename
+	end
+
 	self.player = Player:new(game.gates.enter:getPos())
 	game.gates.enter:ejectPlayer(self.player)
 
@@ -21,9 +27,118 @@ function PlayState:initialize(mode)
 end
 
 function PlayState:close()
+	game:clearObjects()
 	love.mouse.setCursor()
 	playstate = nil
 end
+
+function PlayState:restart()
+	if self.mode == "test" then
+		game:pop()
+		editorstate:startTest()
+	elseif self.mode == "play" then
+		game:clearObjects()
+		self:initialize(self.mode, self.currentLevel)
+	end
+end
+
+--Playstate has to load directly from file too
+function PlayState:loadLevel(filename)
+	local chunk = love.filesystem.load("pushedlevels/"..filename)
+	if not chunk then
+		error("ERROR: File "..filename.." not found!")
+		return false
+	end
+	local level = chunk()
+
+	game.gates.enter = Gate:new("enter", 22, 1, "left", false)
+	game.gates.exit = Gate:new("exit", 22, config.grid_w, "right", false)
+	for k, gate in pairs(game.gates) do
+		local t = level.gates[k]
+		gate:setPos2(t[1], t[2])
+		gate:setDir(t[3])
+	end
+	local overlap = self:getOverlap()
+	for _, t in ipairs(level.tiles) do
+		local i, j = t[1], t[2]
+		if not overlap[i][j] then
+			local key = t[3]
+			local actuator = t[4]
+			local dat = data.tiles[key]
+
+			local tile = dat.class:new(i, j, unpack(dat.args))
+			tile:setActuator(actuator)
+			table.insert(game.tiles, tile)
+		end
+	end
+	if level.enemies then
+		for _, t in ipairs(level.enemies) do
+			local i, j = t[1], t[2]
+			if not overlap[i][j] then
+				local key = t[3]
+				local dat = data.enemies[key]
+
+				local enemy = dat.class:new(i, j, unpack(dat.args))
+				table.insert(game.enemies, enemy)
+			end
+		end
+	end
+	if level.items then
+		for _, t in ipairs(level.items) do
+			local i, j = t[1], t[2]
+			if not overlap[i][j] then
+				local key = t[3]
+				local dat = data.items[key]
+
+				local item = dat.class:new(i, j, unpack(dat.args))
+				table.insert(game.items, item)
+			end
+		end
+	end
+	
+	--walls and pits
+	for _, v in ipairs(level.pit) do
+		game.walls.down:setHole(0, v, true)
+	end
+	for _, gate in pairs(game.gates) do
+		local holes = gate:getOccupied(true)
+		local wall = game.walls[gate.dir]
+		for _, t in ipairs(holes) do
+			wall:setHole(t[1], t[2], true)
+		end
+	end
+
+	for _, wall in pairs(game.walls) do
+		wall:createShapes()
+	end
+
+	local exit = game.gates.exit
+	game.exit = {
+		dir = exit.dir,
+		coords = exit:getOccupied(true)
+	}
+
+	game.gates.enter:activate()
+	game.gates.exit:activate()
+
+	return true
+end
+
+function PlayState:getOverlap()
+	local overlap = {}
+	for i = 1,  config.grid_w do
+		overlap[i] = {}
+	end
+	for k, g in pairs(game.gates) do
+		local t = g:getOccupied()
+		for _, p in ipairs(t) do
+			local i, j = p[1], p[2]
+			overlap[i][j] = k --Only one object can occupy a cell at a time
+		end
+	end
+	return overlap
+end
+
 
 --partions tiles to a grid based on its position
 --can now do moving blocks
@@ -151,9 +266,39 @@ use_keyboard_controls = false --debug
 function PlayState:update(dt)
 	local player = self.player
 
-	if self.mode == "test" and keys.escape then
-		game:clearObjects()
-		game:pop()
+	if self.mode == "test" then
+		if keys.escape then
+			game:clearObjects()
+			game:pop()
+		end
+	elseif self.mode == "play" then
+		if keys.escape then
+			game:clearObjects()
+			game:pop()
+		end
+	end
+
+	if keys.r then
+		self:restart()
+		return
+	end
+
+	if self.state == "death" then
+		if mouse.m1 == 1 then
+			self:restart()
+		end
+		return
+	end
+
+	if self.state == "victory" then
+		if mouse.m1 == 1 then
+			self:restart()
+		end
+		return
+	end
+	--temporary
+	if player.dead then
+		self.state = "death"
 	end
 
 	if keys.k == 1 then
@@ -174,23 +319,10 @@ function PlayState:update(dt)
 		local d = 100
 		local px, py = self.player:getPos()
 		mouse.x, mouse.y = px + x*d, py + y*d
-
-		
 	end
 	--this is useful even for mouse controls
 	if keys.lshift then
 		mouse.m1 = 1
-	end
-
-
-
-	if self.state == "death" or self.state == "victory" then
-		return
-	end
-
-	--temporary
-	if player.dead then
-		self.state = "death"
 	end
 
 	--Player out of bounds check

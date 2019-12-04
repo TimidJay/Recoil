@@ -18,7 +18,8 @@ local function getLevels()
 		if #line > 0 then
 			if line:sub(1, 1) == "[" then
 				index = index + 1
-			else
+			--check if file exists first
+			elseif love.filesystem.getInfo("pushedLevels/"..line) then
 				table.insert(levels[index], line)
 			end
 		end
@@ -82,7 +83,9 @@ function LevelSelectState:initialize()
 		local frame, list = make_list(i, x, y, w, h, levels)
 
 		list.OnRowClicked = function(obj, row, rowdata)
-			print("Play: "..rowdata[1])
+			local filename = rowdata[1]
+			print("Play ".." "..filename)
+			game:push(PlayState:new("play", filename))
 		end
 	end
 end
