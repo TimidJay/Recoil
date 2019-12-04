@@ -8,26 +8,6 @@ local difficulties = {
 	"very_hard"
 }
 
-local function getLevels()
-	local levels = {}
-	for i = 1, 5 do
-		levels[i] = {}
-	end
-	local index = 0
-	for line in love.filesystem.lines("level_order.txt") do
-		if #line > 0 then
-			if line:sub(1, 1) == "[" then
-				index = index + 1
-			--check if file exists first
-			elseif love.filesystem.getInfo("pushedLevels/"..line) then
-				table.insert(levels[index], line)
-			end
-		end
-	end
-
-	return levels
-end
-
 local function make_button(name, x, y, w, h)
 	local butt = loveframes.Create("button")
 	butt:SetText(name)
@@ -48,23 +28,33 @@ local function make_list(index, x, y, w, h, levels)
 	local list = loveframes.Create("columnlist", frame)
 	list:SetPos(10, 35)
 	list:SetSize(w - 20, h - 45)
+	list:AddColumn("#")
 	list:AddColumn("Name")
+	list:AddColumn("W")
+	local width = list:GetWidth()
+	list:SetColumnWidth(1, width/8 * 1)
+	list:SetColumnWidth(2, width/8 * 6)
+	list:SetColumnWidth(3, width/8 * 1)
 	--disables the sorting effect when you click on list
-	list.children[#list.children].enabled = false
+	for _, col in ipairs(list.children) do
+		col.enabled = false 
+	end
+	-- list.children[#list.children].enabled = false
 
 
 	local names = levels[index]
 	for i, n in ipairs(names) do
-		list:AddRow(n)
+		list:AddRow(i, n, 0)
 	end
 
-	list:ResizeColumns()
+	-- list:ResizeColumns()
 	list:SetSelectionEnabled(false)
 
 	return frame, list
 end
 
 function LevelSelectState:initialize()
+	levelselectstate = self
 	self.className = "LevelSelectState"
 
 	local cx, cy = window.w/2, window.h/2
@@ -74,7 +64,9 @@ function LevelSelectState:initialize()
 		game:pop()
 	end
 
-	local levels = getLevels()
+	self.lists = {}
+
+	local levels = self:getLevels()
 
 	local w, h = 200, 400
 	for i = 1, 5 do
@@ -83,11 +75,56 @@ function LevelSelectState:initialize()
 		local frame, list = make_list(i, x, y, w, h, levels)
 
 		list.OnRowClicked = function(obj, row, rowdata)
-			local filename = rowdata[1]
+			local filename = rowdata[2]
 			print("Play ".." "..filename)
 			game:push(PlayState:new("play", filename))
 		end
+
+		table.insert(self.lists, list)
 	end
+end
+
+function LevelSelectState:getLevels()
+	self.all_levels = {}
+	self.all_levels_lookup = {}
+	self.column_list_lookup = {}
+
+	local levels = {}
+	for i = 1, 5 do
+		levels[i] = {}
+		self.column_list_lookup[i] = {}
+	end
+	local index = 0
+	local size = 0
+	for line in love.filesystem.lines("level_order.txt") do
+		if #line > 0 then
+			if line:sub(1, 1) == "[" then
+				index = index + 1
+				size = 0
+			--check if file exists first
+			elseif love.filesystem.getInfo("pushedLevels/"..line) then
+				table.insert(levels[index], line)
+				table.insert(self.all_levels, line)
+				self.column_list_lookup[line] = {index, size+1}
+				size = size + 1
+			else
+				print("Warning: Level "..line.." does not exist!")
+			end
+		end
+	end
+
+	for k, v in pairs(self.all_levels) do
+		self.all_levels_lookup[v] = k
+	end
+
+	return levels
+end
+
+function LevelSelectState:beatLevel(level)
+	local t = self.column_list_lookup[level]
+	if not t then return end
+
+	self.lists[t[1]]:SetCellText(1, t[2], 3)
 end
 
 function LevelSelectState:update(dt)

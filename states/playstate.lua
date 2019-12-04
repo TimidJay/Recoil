@@ -42,6 +42,21 @@ function PlayState:restart()
 	end
 end
 
+--should only be called on play mode
+function PlayState:nextLevel()
+	local all_levels = levelselectstate.all_levels
+	local lookup = levelselectstate.all_levels_lookup
+
+	game:clearObjects()
+	local index = lookup[self.currentLevel]
+	local nextLevel = all_levels[index+1]
+	if not nextLevel then
+		game:pop()
+		return
+	end
+	self:initialize("play", nextLevel)
+end
+
 --Playstate has to load directly from file too
 function PlayState:loadLevel(filename)
 	local chunk = love.filesystem.load("pushedlevels/"..filename)
@@ -291,8 +306,14 @@ function PlayState:update(dt)
 	end
 
 	if self.state == "victory" then
-		if mouse.m1 == 1 then
-			self:restart()
+		if self.mode == "test" then
+			if mouse.m1 == 1 then
+				self:restart()
+			end
+		elseif self.mode == "play" then
+			if mouse.m1 == 1 then
+				self:nextLevel()
+			end
 		end
 		return
 	end
@@ -358,10 +379,12 @@ function PlayState:update(dt)
 			if dir == "up" or dir == "down" then
 				if pj >= coords[1][2] and pj <= coords[3][2] then
 					self.state = "victory"
+					levelselectstate:beatLevel(self.currentLevel)
 				end
 			else
 				if pi >= coords[1][1] and pi <= coords[3][1] then
 					self.state = "victory"
+					levelselectstate:beatLevel(self.currentLevel)
 				end
 			end
 		end
