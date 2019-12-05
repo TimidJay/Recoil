@@ -244,8 +244,9 @@ loadImage("turret_editor", "media/turret_editor.png")
 loadImage("bullet", "media/bullettest1.png")
 loadImage("donut", "media/donutblock.png")
 loadImage("oneway", "media/oneway.png")
-loadImage("player", "media/player_spritesheet.png")
+loadImage("player", "media/player_spritesheet2.png")
 loadImage("title", "media/recoillogo.png")
+loadImage("logo", "media/FutureProofLogoBanner.png")
 
 shader.glow = love.graphics.newShader[[
 	extern number mag;
@@ -361,7 +362,8 @@ end
 
 rects.player = {}
 for i = 1, 4 do
-	table.insert(rects.player, make_rect((i-1)*28, 0, 28, 52))
+	-- table.insert(rects.player, make_rect((i-1)*28, 0, 28, 52))
+	table.insert(rects.player, make_rect((i-1)*20, 0, 20, 40))
 end
 
 local t1 = {imgstr = "player"}

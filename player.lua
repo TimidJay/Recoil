@@ -22,8 +22,9 @@ Player.speed_limit_decay_delay = 0.05 --how much time before the increased speed
 Player.speed_limit_instant_decay = false --if true then, speed limit reverts instantly after decay delay (ignores the decay value)
 
 function Player:initialize(x, y)
-	Sprite.initialize(self, "player", rects.player[1], 28, 52, x or 0, y or 0)
-	self:setShape(util.newRectangleShape(self.w, self.h))
+	Sprite.initialize(self, "player", rects.player[1], 20, 40, x or 0, y or 0) --28 52
+	-- self:setShape(util.newRectangleShape(self.w, self.h))
+	self:setShape(util.newRectangleShape(20, 40))
 	self.ay = Player.gravity
 	self.speedLimit = Player.speed_limit
 	self.touchingGround = false
@@ -36,6 +37,30 @@ function Player:setHelpless(time)
 	self.helplessTimer = time or Player.default_helpless
 	self.afterImageTimer = 0
 end
+
+--to get the shape's bbox
+-- function Player:bbox()
+-- 	return Sprite.bbox(self, false)
+-- end
+
+--adjust hitbox location?
+-- function Player:setShape(shape)
+-- 	self:removeShape()
+-- 	self.shape = shape
+-- 	shape.sprite = self
+-- 	self.shape:moveTo(self.x, self.y + 2)
+-- 	self.shape:setRotation(self.angle)
+-- end
+
+-- --adjust hitbox location?
+-- function Player:updateShape()
+-- 	if (self.shape) then
+-- 		self.shape:moveTo(self.x, self.y + 2)
+-- 		self.shape:setRotation(self.angle)
+-- 	end
+-- end
+
+
 
 --checks to see if the player's velocity goes against the separating vector
 --might have to change this if the player starts colliding against slopes
@@ -459,7 +484,7 @@ function Gun:bulletImpactSparks(px, py, vx, vy, shape)
 		nx, ny = 0, 1
 	end
 
-	print(nx.." "..ny)
+	-- print(nx.." "..ny)
 
 
 	if nx == 0 then
