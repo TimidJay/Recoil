@@ -18,7 +18,7 @@ easy_shootingRange_MN
 
 [MEDIUM]
 easy_medium_bouncehouse_MN
-easy_mediumbouncehouse2_MN
+easy_medium_bouncehouse2_MN
 TrickyFallings
 very_easy_H.txt
 easyAnnoyingMazeJL
@@ -31,10 +31,11 @@ Medium-QuadSwitch-YM.txt
 Medium-Turret-Shoot-YM.txt
 med_three_turrets.txt
 med_turret_loop.txt
-med_turrent_showdown.txt
+med_turret_showdown.txt
 
 [VERY HARD]
 Hardish-Ammo-YM.txt
 Hardish-LaserFall-YM.txt
 hardDeathChamberJL
 mediumCrumblyPuzzleJL
+very_hard_bullshit.txt

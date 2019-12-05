@@ -300,8 +300,10 @@ function Turret:draw()
 		love.graphics.line(x0, y0, x1, y1)
 
 		if self.state == "preparing" then
-			love.graphics.setColor(1, 1, 1, 1)
-			draw("hitmarker", nil, x1, y1, 0, 10, 10)
+			love.graphics.setColor(1, 0, 0, 1)
+			love.graphics.setLineStyle("smooth")
+			love.graphics.setLineWidth(2)
+			love.graphics.circle("line", x1, y1, 6)
 		end
 	end
 
