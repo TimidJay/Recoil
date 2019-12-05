@@ -168,7 +168,7 @@ end
 Gun = class("Gun", Sprite)
 
 function Gun:initialize(player)
-	Sprite.initialize(self, "gun", nil, 57, 17)
+	Sprite.initialize(self, "gun", nil, 56, 18)
 	self.player = player
 	self:setPos(player:getPos())
 	self.muzzleOffset = {dx = 27, dy = -2}

@@ -82,6 +82,38 @@ function LevelSelectState:initialize()
 
 		table.insert(self.lists, list)
 	end
+
+	self:loadProgress()
+end
+
+--should be done once after initializing LevelSelectState
+function LevelSelectState:loadProgress()
+	self.beatenLevels = {}
+	local chunk = love.filesystem.load("save.txt")
+	if not chunk then return end
+
+	local data = chunk()
+	for _, level in pairs(data.beatenLevels) do
+		self:beatLevel(level)
+	end
+end
+
+--should be called after beating a level
+function LevelSelectState:saveProgress()
+	local duplicates = {}
+
+	local file = love.filesystem.newFile("save.txt")
+	file:open("w")
+	file:write("local data = {}\n")
+	file:write("data.beatenLevels = {\n")
+	for _, level in ipairs(self.beatenLevels) do
+		if not duplicates[level] then
+			file:write("\t\""..level.."\",\n")
+			duplicates[level] = true
+		end
+	end
+	file:write("}\n")
+	file:write("return data")
 end
 
 function LevelSelectState:getLevels()
@@ -125,6 +157,9 @@ function LevelSelectState:beatLevel(level)
 	if not t then return end
 
 	self.lists[t[1]]:SetCellText(1, t[2], 3)
+
+	table.insert(self.beatenLevels, level)
+	self:saveProgress()
 end
 
 function LevelSelectState:update(dt)

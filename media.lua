@@ -218,7 +218,7 @@ cursors.empty = love.mouse.newCursor("media/crosshair2.png", 15, 15)
 
 loadImage("white_pixel", "media/whitepixel.png")
 loadImage("clear_pixel", "media/clearpixel.png")
-loadImage("gun", "media/connor-schultz-asset.png")
+loadImage("gun", "media/smolgun.png")
 loadImage("brick", "media/mariobrick.png")
 loadImage("hitmarker", "media/hitmark.png")
 loadImage("gate", "media/gates2.png")
