@@ -19,7 +19,6 @@ easy_shootingRange_MN
 [MEDIUM]
 easy_medium_bouncehouse_MN
 easy_medium_bouncehouse2_MN
-TrickyFallings
 very_easy_H.txt
 easyAnnoyingMazeJL
 
