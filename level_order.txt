@@ -3,24 +3,29 @@ very_easy_step.txt
 very_easy_gap.txt
 very_easy_switch.txt
 very_easy_death.txt
-3Pit
 Easy-Jump-And-Shoot-YM.txt
 FreefallLevel
 FallingLevel3
 
+
 [EASY]
 easy_cliff.txt
-easy_falling_chain_reloads_MN
+
 easy_falling_MN
 easyOptionalDonutJL
 easyDonutFallJL
-easy_shootingRange_MN
+easy_shootingrange_MN
+very_easy_H.txt
 
 [MEDIUM]
 easy_medium_bouncehouse_MN
 easy_medium_bouncehouse2_MN
-very_easy_H.txt
+easy_falling_chain_reloads_MN
 easyAnnoyingMazeJL
+med_three_turrets.txt
+Leaping_Gaps
+Bullets_Over_Walls
+3Pit
 
 [HARD]
 medium_fallbait_MN
@@ -28,13 +33,19 @@ med_switch_tower.txt
 med_recoil_switch.txt
 Medium-QuadSwitch-YM.txt
 Medium-Turret-Shoot-YM.txt
-med_three_turrets.txt
 med_turret_loop.txt
 med_turret_showdown.txt
+Gaps_And_Mazes
+
+
 
 [VERY HARD]
+Turrets_Of_Death
+Turrets_And_Mazes
 Hardish-Ammo-YM.txt
 Hardish-LaserFall-YM.txt
 hardDeathChamberJL
 mediumCrumblyPuzzleJL
 very_hard_bullshit.txt
+
+
