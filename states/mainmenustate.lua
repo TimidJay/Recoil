@@ -56,11 +56,11 @@ function MainMenuState:showControlsWindow()
 		"Left-Click to fire weapon",
 		"Right-Click to aim in the opposite direction",
 		"Press R to instantly restart the level",
-		"Press lctrl+Q to quit immediately.",
+		"Press Left Control + Q to quit immediately.",
 		"Press K to toggle Keyboard Mode",
 		"While in Keyboard Mode:",
-		"\tarrow keys control the aim",
-		"\tinstead of the mouse"
+		"\tArrow keys control the aim",
+		"\tPress Left Shift to fire weapon"
 	}
 	local str = ""
 	for _, s in ipairs(lines) do
@@ -82,4 +82,7 @@ function MainMenuState:draw()
 	love.graphics.setColor(1, 1, 1, 1)
 	draw("title", nil, window.w/2, window.h/2, 0, window.w, window.h)
 	-- love.graphics.rectangle("fill", 0, 0, window.w, window.h)
+	local w, h = 653, 517
+	local w, h = w/4, h/4
+	draw("logo", nil, 60 + w/2, window.h - 60 - h/2, 0, w, h)
 end
