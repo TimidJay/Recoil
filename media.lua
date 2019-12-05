@@ -245,6 +245,7 @@ loadImage("bullet", "media/bullettest1.png")
 loadImage("donut", "media/donutblock.png")
 loadImage("oneway", "media/oneway.png")
 loadImage("player", "media/player_spritesheet.png")
+loadImage("title", "media/recoillogo.png")
 
 shader.glow = love.graphics.newShader[[
 	extern number mag;
