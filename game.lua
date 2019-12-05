@@ -14,9 +14,9 @@ game = {}
 
 
 
---TODO: Change this to contain Recoil object types
--- game.listTypes = {"balls", "bricks", "projectiles", "powerups", "callbacks", "particles", "environments", "menacers", "enemies"}
-game.listTypes = {"items", "enemies", "tiles", "projectiles", "particles"}
+--particles2 is drawn behind player
+--particles is drawn in front of player
+game.listTypes = {"items", "enemies", "tiles", "projectiles", "particles", "particles2"}
 
 function game:initialize()
 	self.states = {}

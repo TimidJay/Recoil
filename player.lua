@@ -22,7 +22,7 @@ Player.speed_limit_decay_delay = 0.05 --how much time before the increased speed
 Player.speed_limit_instant_decay = false --if true then, speed limit reverts instantly after decay delay (ignores the decay value)
 
 function Player:initialize(x, y)
-	Sprite.initialize(self, "white_pixel", nil, 20, 40, x or 0, y or 0)
+	Sprite.initialize(self, "player", rects.player[1], 28, 52, x or 0, y or 0)
 	self:setShape(util.newRectangleShape(self.w, self.h))
 	self.ay = Player.gravity
 	self.speedLimit = Player.speed_limit
@@ -34,6 +34,7 @@ end
 function Player:setHelpless(time)
 	self.helpless = true
 	self.helplessTimer = time or Player.default_helpless
+	self.afterImageTimer = 0
 end
 
 --checks to see if the player's velocity goes against the separating vector
@@ -84,6 +85,28 @@ function Player:update(dt)
 
 	keyleft = love.keyboard.isDown("a")
 	keyright = love.keyboard.isDown("d")
+
+	if not self.touchingGround then
+		self:stopAnimation()
+	elseif keyright then
+		if not self.isAnimating then
+			if self.gun.flip then
+				self:playAnimation("player_walk_left", true)
+			else
+				self:playAnimation("player_walk_right", true)
+			end
+		end
+	elseif keyleft then
+		if not self.isAnimating then
+			if self.gun.flip then
+				self:playAnimation("player_walk_right", true)
+			else
+				self:playAnimation("player_walk_left", true)
+			end
+		end
+	else
+		self:stopAnimation()
+	end
 	
 
 	--Player Physics
@@ -92,6 +115,28 @@ function Player:update(dt)
 		self.helplessTimer = self.helplessTimer - dt
 		if self.helplessTimer <= 0 then
 			self.helpless = false
+		end
+		--draw after image
+		self.afterImageTimer = self.afterImageTimer - dt
+		if self.afterImageTimer <= 0 then
+			self.afterImageTimer = self.afterImageTimer + 0.025
+			local p = Sprite:new(self.imgstr, self.rect, self.w, self.h, self.x, self.y)
+			local mag = self.helplessTimer / Player.default_helpless
+			p.fade = 1.25 - mag
+			p.update = function(obj, dt)
+				obj.fade = obj.fade + dt
+			end
+			p.isDead = function(obj)
+				return obj.fade >= 1
+			end
+			p.draw = function(obj)
+				shader.glow:send("mag", 1)
+				shader.glow:send("target", {1, 0.3, 0.3, 1 - obj.fade})
+				love.graphics.setShader(shader.glow)
+				Sprite.draw(obj)
+				love.graphics.setShader()
+			end
+			game:emplace("particles2", p)
 		end
 	else
 		
@@ -150,16 +195,16 @@ function Player:update(dt)
 end
 
 function Player:draw()
-	if self.dead then
-		self:setColor(0.3, 0.3, 0.3)
-	elseif self.helpless then
-		self:setColor(1, 0, 0)
-	elseif self.touchingGround then
-		self:setColor(0, 1, 0)
-	else
-		self:setColor(0, 0, 1)
-	end
-	Sprite.draw(self)
+	-- if self.dead then
+	-- 	self:setColor(0.3, 0.3, 0.3)
+	-- elseif self.helpless then
+	-- 	self:setColor(1, 0, 0)
+	-- elseif self.touchingGround then
+	-- 	self:setColor(0, 1, 0)
+	-- else
+	-- 	self:setColor(0, 0, 1)
+	-- end
+	Sprite.draw(self, self.gun.flip)
 	self.gun:draw()
 end
 
@@ -168,10 +213,10 @@ end
 Gun = class("Gun", Sprite)
 
 function Gun:initialize(player)
-	Sprite.initialize(self, "gun", nil, 56, 18)
+	Sprite.initialize(self, "gun", nil, 76, 26)
 	self.player = player
 	self:setPos(player:getPos())
-	self.muzzleOffset = {dx = 27, dy = -2}
+	self.muzzleOffset = {dx = 37, dy = -2}
 	self.muzzlePoint = {x = 0, y = 0} --to be initialized
 	self:setMuzzlePoint()
 	self.cooldown = 0
@@ -541,13 +586,7 @@ function Gun:ejectCasing()
 end
 
 function Gun:draw()
-	if self.flip then
-		self.h = -self.h
-	end
-	Sprite.draw(self)
-	if self.flip then
-		self.h = -self.h
-	end
+	Sprite.draw(self, false, self.flip)
 	--show the muzzle point for debug
 	-- love.graphics.setColor(1, 0, 0, 1)
 	-- local mp = self.muzzlePoint

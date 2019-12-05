@@ -379,12 +379,16 @@ function PlayState:update(dt)
 			if dir == "up" or dir == "down" then
 				if pj >= coords[1][2] and pj <= coords[3][2] then
 					self.state = "victory"
-					levelselectstate:beatLevel(self.currentLevel)
+					if self.mode == "play" then
+						levelselectstate:beatLevel(self.currentLevel)
+					end
 				end
 			else
 				if pi >= coords[1][1] and pi <= coords[3][1] then
 					self.state = "victory"
-					levelselectstate:beatLevel(self.currentLevel)
+					if self.mode == "play" then
+						levelselectstate:beatLevel(self.currentLevel)
+					end
 				end
 			end
 		end
@@ -478,6 +482,9 @@ function PlayState:draw()
 	end
 	for _, e in ipairs(game.enemies) do
 		e:draw()
+	end
+	for _, p in ipairs(game.particles2) do
+		p:draw()
 	end
 	self.player:draw()
 	for _, p in ipairs(game.particles) do

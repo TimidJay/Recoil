@@ -249,9 +249,12 @@ function Sprite:update(dt)
 	self:updateShape()
 end
 
-function Sprite:draw()
+--flip the sprite using flip_x, flip_y
+function Sprite:draw(flip_x, flip_y)
+	local sx = flip_x and -1 or 1
+	local sy = flip_y and -1 or 1
 	love.graphics.setColor(self.color.r, self.color.g, self.color.b, self.color.a)
-	draw(self.imgstr, self.rect, self.x, self.y, self.angle, self.w, self.h, nil, nil, nil, nil, self.drawFloor)
+	draw(self.imgstr, self.rect, self.x, self.y, self.angle, self.w*sx, self.h*sy, nil, nil, nil, nil, self.drawFloor)
 end
 
 function Sprite:drawAlt()

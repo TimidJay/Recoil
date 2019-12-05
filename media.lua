@@ -218,7 +218,7 @@ cursors.empty = love.mouse.newCursor("media/crosshair2.png", 15, 15)
 
 loadImage("white_pixel", "media/whitepixel.png")
 loadImage("clear_pixel", "media/clearpixel.png")
-loadImage("gun", "media/smolgun.png")
+loadImage("gun", "media/medgun.png")
 loadImage("brick", "media/mariobrick.png")
 loadImage("hitmarker", "media/hitmark.png")
 loadImage("gate", "media/gates2.png")
@@ -244,6 +244,23 @@ loadImage("turret_editor", "media/turret_editor.png")
 loadImage("bullet", "media/bullettest1.png")
 loadImage("donut", "media/donutblock.png")
 loadImage("oneway", "media/oneway.png")
+loadImage("player", "media/player_spritesheet.png")
+
+shader.glow = love.graphics.newShader[[
+	extern number mag;
+	extern vec4 target;
+	vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 pixel_coords)
+	{
+		vec4 pixel = Texel(texture, texture_coords);
+		pixel.r = pixel.r + (target.r - pixel.r) * mag;
+		pixel.g = pixel.g + (target.g - pixel.g) * mag;
+		pixel.b = pixel.b + (target.b - pixel.b) * mag;
+		pixel.a = min(pixel.a, target.a);
+		return pixel;
+	}
+]]
+shader.glow:send("mag", 0)
+shader.glow:send("target", {1, 1, 1, 1})
 
 --quads are required to be tied to an image
 --rects are just simple tables with (x, y, w, h)
@@ -268,6 +285,8 @@ function make_rect(x, y, w, h)
 	setmetatable(r, mt)
 	return r
 end
+
+
 
 
 --EXAMPLE FROM OTAKUBALL
@@ -338,3 +357,17 @@ for i = 1, 5 do
 		table.insert(ani[anistr], {rects.shockwave[j], 0.05})
 	end
 end
+
+rects.player = {}
+for i = 1, 4 do
+	table.insert(rects.player, make_rect((i-1)*28, 0, 28, 52))
+end
+
+local t1 = {imgstr = "player"}
+local t2 = {imgstr = "player"}
+for i = 1, 4 do
+	table.insert(t1, {rects.player[(i%4)+1], 0.1})
+	table.insert(t2, {rects.player[5-i], 0.1})
+end
+ani["player_walk_right"] = t1
+ani["player_walk_left"] = t2
