@@ -147,9 +147,10 @@ function Player:update(dt)
 			self.afterImageTimer = self.afterImageTimer + 0.025
 			local p = Sprite:new(self.imgstr, self.rect, self.w, self.h, self.x, self.y)
 			local mag = self.helplessTimer / Player.default_helpless
-			p.fade = 1.25 - mag
+			-- p.fade = 1.25 - mag
+			p.fade = 0.5
 			p.update = function(obj, dt)
-				obj.fade = obj.fade + dt
+				obj.fade = obj.fade + dt * 2
 			end
 			p.isDead = function(obj)
 				return obj.fade >= 1

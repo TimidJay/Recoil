@@ -420,9 +420,11 @@ function PlayState:update(dt)
 	--Player collision with items
 
 	for _, item in ipairs(game.items) do
-		local check, dx, dy = item:checkSpriteCollision(player)
-		if check then
-			item:onPlayerHit(player)
+		if item.tangible then
+			local check, dx, dy = item:checkSpriteCollision(player)
+			if check then
+				item:onPlayerHit(player)
+			end
 		end
 	end
 
