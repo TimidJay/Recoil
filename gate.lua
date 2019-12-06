@@ -99,6 +99,7 @@ function Gate:ejectPlayer(player)
 	local v = vtable[self.dir]
 	player:setVel(v[1], v[2])
 	player:setHelpless(0.2)
+	player.afterImageTimer = 1000 --disable after images
 end
 
 function Gate:checkPlayerCollision(player)
