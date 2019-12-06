@@ -31,9 +31,15 @@ function LaserBlock:fireLaser()
 		for _, tile in ipairs(playstate.tileGrid[i][j]) do
 			if tile.tangible then
 				--self.stop is a scalar that represents length of laser
-				self.stop = math.abs(i - self.i) + math.abs(j - self.j)
-				self.stop = self.stop * self.w - self.w/2
-				return
+				-- self.stop = math.abs(i - self.i) + math.abs(j - self.j)
+				-- self.stop = self.stop * self.w - self.w/2
+
+				local check, t = tile.shape:intersectsRay(self.x, self.y, dj, di)
+				if check and t >= 0 then
+					self.stop = t
+					return
+				end
+				-- return
 			end
 		end
 		i, j = i + di, j + dj

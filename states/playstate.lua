@@ -278,7 +278,28 @@ end
 
 use_keyboard_controls = false --debug
 
+enable_multipass = true
+
 function PlayState:update(dt)
+	local player = self.player
+	if player.gun:canFire() then
+		self.multipass = true
+	elseif self.multipass then
+		if player.speedLimit <= Player.speed_limit then
+			self.multipass = false
+		end
+	end
+	if enable_multipass and self.multipass then
+		for i = 1, 3 do
+			self:update2(dt/3)
+		end
+	else
+		self:update2(dt)
+	end
+end
+
+
+function PlayState:update2(dt)
 	local player = self.player
 
 	if self.mode == "test" then
