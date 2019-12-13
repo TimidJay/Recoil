@@ -116,6 +116,8 @@ function LevelSelectState:saveProgress()
 	file:write("return data")
 end
 
+override_file_check = true
+
 function LevelSelectState:getLevels()
 	self.all_levels = {}
 	self.all_levels_lookup = {}
@@ -134,7 +136,7 @@ function LevelSelectState:getLevels()
 				index = index + 1
 				size = 0
 			--check if file exists first
-			elseif love.filesystem.getInfo("pushedLevels/"..line) then
+			elseif override_file_check or love.filesystem.getInfo("pushedLevels/"..line) then
 				table.insert(levels[index], line)
 				table.insert(self.all_levels, line)
 				self.column_list_lookup[line] = {index, size+1}

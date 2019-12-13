@@ -300,6 +300,12 @@ end
 
 
 function PlayState:update2(dt)
+	--stops the game from popping multiple times
+	--during multipass
+	if game:top() ~= self then
+		return
+	end
+
 	local player = self.player
 
 	if self.mode == "test" then
