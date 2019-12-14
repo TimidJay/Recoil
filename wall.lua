@@ -10,14 +10,14 @@ Wall.data = {
 	left = {
 		x = 0, 
 		y = 0,
-		w = config.border_w,
+		w = WALL_WIDTH,
 		h = window.h,
 		gr = grad("horizontal", bl, cl)
 	},
 	right = {
-		x = window.w - config.border_w,
+		x = window.w - WALL_WIDTH,
 		y = 0,
-		w = config.border_w,
+		w = WALL_WIDTH,
 		h = window.h,
 		gr = grad("horizontal", cl, bl)
 	},
@@ -25,42 +25,51 @@ Wall.data = {
 		x = 0,
 		y = 0,
 		w = window.w,
-		h = config.border_w,
+		h = WALL_WIDTH,
 		gr = grad("vertical", bl, cl)
 
 	},
 	down = {
 		x = 0,
-		y = window.h - config.border_w,
+		y = window.h - WALL_WIDTH,
 		w = window.w,
-		h = config.border_w,
+		h = WALL_WIDTH,
 		gr = grad("vertical", cl, bl)
 	}
 }
 
---left, right, up, down
-function Wall:initialize(dir)
+--dir left, right, up, down
+--xn and yn values are the edges
+--level is temp?
+function Wall:initialize(dir, x0, x1, y0, y1, level)
 	self.dir = dir
 	local t = Wall.data[dir]
 	--x and y denote top left corner instead of middle
-	self.x = t.x
-	self.y = t.y
-	self.w = t.w
-	self.h = t.h
-	self.gr = t.gr
+	-- self.x = t.x
+	-- self.y = t.y
+	-- self.w = t.w
+	-- self.h = t.h
+	-- self.gr = t.gr
+
+	self.x = x0
+	self.y = y0
+	self.w = x1 - x0
+	self.h = y1 - y0
+
+	self.x0, self.x1, self.y0, self.y1 = x0, x1, y0, y1
 
 	self.holes = {}
 	if dir == "up" or dir == "down" then
-		for i = 1, config.grid_w do
+		for i = 1, level.grid_w do
 			self.holes[i] = false
 		end
 	else
-		for i = 1, config.grid_h do
+		for i = 1, level.grid_h do
 			self.holes[i] = false
 		end
 	end
 
-	self.shape = util.newRectangleShape(t.w, t.h, t.x, t.y)
+	-- self.shape = util.newRectangleShape(self.w, self.h, self.x, self.y)
 	self.shapes = {}
 end
 
@@ -130,17 +139,17 @@ function Wall:createShapes()
 		local shape
 		if self.dir == "up" or self.dir == "down" then
 			shape = util.newRectangleShape(
-				(seg.finish - seg.start + 1) * config.cell_w,
+				(seg.finish - seg.start + 1) * CELL_WIDTH,
 				self.h,
-				config.border_w + (seg.start-1) * config.cell_w,
+				WALL_WIDTH + (seg.start-1) * CELL_WIDTH,
 				self.y
 			)
 		else
 			shape = util.newRectangleShape(
 				self.w,
-				(seg.finish - seg.start + 1) * config.cell_w,
+				(seg.finish - seg.start + 1) * CELL_WIDTH,
 				self.x,
-				config.border_w + (seg.start-1) * config.cell_w
+				WALL_WIDTH + (seg.start-1) * CELL_WIDTH
 			)
 		end
 		table.insert(self.shapes, shape)
@@ -201,45 +210,46 @@ end
 
 function Wall:draw()
 	local rect = love.graphics.rectangle
-	local border_w = config.border_w
-	local cell_w = config.cell_w
 	love.graphics.setColor(0.5, 0.5, 0.5, 1)
 	-- love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
 
-	local gr_w = cell_w * 0.75
+	local gr_w = CELL_WIDTH * 0.75
 
 	if self.dir == "up" or self.dir == "down" then
-		rect("fill", 0            , self.y, cell_w, self.h) --left corner
-		rect("fill", config.wall_r, self.y, cell_w, self.h) --right corner
+		--draw corners
+		rect("fill", 0                  , self.y, WALL_WIDTH, WALL_WIDTH) --left corner
+		rect("fill", self.w - WALL_WIDTH, self.y, WALL_WIDTH, WALL_WIDTH) --right corner
 		for j, v in ipairs(self.holes) do
-			local x = border_w + (j-1) * cell_w
+			local x = WALL_WIDTH + (j-1) * CELL_WIDTH
 			local y = self.y
 			local dy = self.dir == "up" and 0 or -gr_w
 			local dh = gr_w
 			if v then
 				love.graphics.setColor(1, 1, 1, 1)
-				love.graphics.draw(self.gr, x, y + dy, 0, cell_w, self.h + dh)
+				love.graphics.draw(self.gr, x, y + dy, 0, CELL_WIDTH, self.h + dh)
 			else
 				love.graphics.setColor(0.5, 0.5, 0.5, 1)
-				rect("fill", x, y, cell_w, self.h)
+				rect("fill", x, y, CELL_WIDTH, self.h)
 			end
 		end
 	else
 		--corners are already filled by up and down walls
 		for i, v in ipairs(self.holes) do
 			local x = self.x
-			local y = border_w + (i-1) * cell_w
+			local y = WALL_WIDTH + (i-1) * CELL_WIDTH
 			local dx = self.dir == "left" and 0 or -gr_w
 			local dw = gr_w
 			if v then
 				love.graphics.setColor(1, 1, 1, 1)
-				love.graphics.draw(self.gr, x + dx, y, 0, self.w + dw, cell_w)
+				love.graphics.draw(self.gr, x + dx, y, 0, self.w + dw, CELL_WIDTH)
 			else
 				love.graphics.setColor(0.5, 0.5, 0.5, 1)
-				rect("fill", x, y, self.w, cell_w)
+				rect("fill", x, y, self.w, CELL_WIDTH)
 			end
 		end
 	end
+
+	--draw shapes for debugging
 
 	-- love.graphics.setColor(0, 1, 1, 1)
 	-- love.graphics.setLineWidth(1)

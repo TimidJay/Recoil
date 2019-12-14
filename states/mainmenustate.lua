@@ -36,6 +36,17 @@ function MainMenuState:initialize()
 	controlButton.OnClick = function(obj, x, y)
 		self:showControlsWindow()
 	end
+
+	local testButton = make_button("TEST", cx , cy + 200, 100, 30)
+	testButton.OnClick = function(obj, x, y)
+		local level = Level:new()
+		game.walls = level:createWalls()
+		for _, w in pairs(game.walls) do
+			w:createShapes()
+		end
+		local ps = PlayState2:new(level)
+		game:push(ps)
+	end
 end
 
 function MainMenuState:showControlsWindow()

@@ -1,10 +1,5 @@
 EditorState = class("EditorState")
 
---TODO:
---  Add both the entrance and exit gate
---  Both gates are 5 tiles long, can only appear on the edge of the level
---  Entrance gate is green, exit gate is red?
-
 tool = "free"
 
 function EditorState:initialize()

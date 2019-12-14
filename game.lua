@@ -27,12 +27,13 @@ function game:initialize()
 		self.newObjects[str] = {}
 	end
 	self.gates = {}
-	self.walls = {
-		left = Wall:new("left"),
-		right = Wall:new("right"),
-		up = Wall:new("up"),
-		down = Wall:new("down")
-	}
+	-- self.walls = {
+	-- 	left = Wall:new("left"),
+	-- 	right = Wall:new("right"),
+	-- 	up = Wall:new("up"),
+	-- 	down = Wall:new("down")
+	-- }
+	self.walls = {}
 	self.exit = nil --{dir = "left", coords = {i = 10, j = 0}}
 end
 

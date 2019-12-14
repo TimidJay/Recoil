@@ -96,7 +96,7 @@ function Player:update(dt)
 
 	if self.gun:canFire() then
 		self.gun:fire()
-		local dx, dy = mouse.x - self.x, mouse.y - self.y
+		local dx, dy = mouse.cx - self.x, mouse.cy - self.y
 		local dx, dy = util.normalize(dx, dy)
 		if mouse.m2 then
 			dx, dy = -dx, -dy
@@ -277,7 +277,7 @@ function Gun:fire()
 	love.mouse.setCursor(cursors.empty)
 
 	local mp = self.muzzlePoint
-	local dx, dy = mouse.x - mp.x, mouse.y - mp.y
+	local dx, dy = mouse.cx - mp.x, mouse.cy - mp.y
 	dx, dy = util.normalize(dx, dy)
 	if mouse.m2 then
 		dx, dy = -dx, -dy
@@ -300,7 +300,7 @@ function Gun:fire()
 			obstructed = true
 			break
 		end
-		--do it backwards in case player is inside a One Way Block
+		--do it backwards in case player is inside a Block
 		local check, t = shape:intersectsRay(mp.x, mp.y, px - mp.x, py - mp.y)
 		if check and t > 0 and t < 1 then
 			obstructed = true
@@ -311,6 +311,7 @@ function Gun:fire()
 	if obstructed then return end
 
 	--do the raycast
+	local hit = false
 	local tmin = math.huge
 	local hitShape = nil
 	for _, shape in ipairs(shapes) do
@@ -318,7 +319,13 @@ function Gun:fire()
 		if check and t > 0 and t < tmin then
 			tmin = t
 			hitShape = shape
+			hit = true
 		end
+	end
+
+	--arbitrary tmin length if the raycast didn't hit anythin g
+	if not hit then
+		tmin = 10000 --longer than most monitors
 	end
 	local tx, ty = mp.x + dx*tmin, mp.y + dy*tmin --shot location
 	--the raycast should always hit something since the player is in an enclosed room
@@ -339,31 +346,32 @@ function Gun:fire()
 	end
 
 	--notify object if it exists
-	local sprite = hitShape.sprite
-	if sprite then
-		if sprite.onBulletHit then
-			sprite:onBulletHit()
+	if hit then
+		local sprite = hitShape.sprite
+		if sprite then
+			if sprite.onBulletHit then
+				sprite:onBulletHit()
+			end
 		end
-	end
-
-	--debug hit marker
-	local hit = Sprite:new("hitmarker", nil, 10, 10, tx, ty)
-	hit.deathTimer = 2
-	hit.update = function(obj, dt)
-		obj.deathTimer = obj.deathTimer - dt
-		if obj.deathTimer <= 0 then
-			obj.dead = true
+		--debug hit marker
+		local marker = Sprite:new("hitmarker", nil, 10, 10, tx, ty)
+		marker.deathTimer = 2
+		marker.update = function(obj, dt)
+			obj.deathTimer = obj.deathTimer - dt
+			if obj.deathTimer <= 0 then
+				obj.dead = true
+			end
+			Sprite.update(obj, dt)
 		end
-		Sprite.update(obj, dt)
+		game:emplace("particles", marker)
 	end
-	game:emplace("particles", hit)
 
 	
-	self:bulletExplosion(tx, ty)
-	--fire the bullet particle effect
 	self:bulletTrail(dx, dy, tmin)
-	--create impact sparks
-	self:bulletImpactSparks(tx, ty, dx, dy, hitShape)
+	if hit then
+		self:bulletExplosion(tx, ty)
+		self:bulletImpactSparks(tx, ty, dx, dy, hitShape)
+	end
 end
 
 --fire a menacing yet harmless bullet
@@ -420,7 +428,7 @@ function Gun:bulletTrail(dx, dy, t)
 		end
 	end
 	game:emplace("particles", bullet)
-
+	--create the "sonic boom" shockwave circles
 	for i = 1, 3 do
 		local shock = Sprite:new("shockwave", rects.shockwave[1], 39, 13, mp.x, mp.y)
 		-- shock.color = {r = 0, b = 0, g = 0, a = 1}
@@ -566,7 +574,7 @@ end
 
 --maybe move some update functions here
 function Gun:update(dt)
-	local dx, dy = mouse.x - self.player.x, mouse.y - self.player.y
+	local dx, dy = mouse.cx - self.player.x, mouse.cy - self.player.y
 	if mouse.m2 then
 		dx, dy = -dx, -dy
 	end

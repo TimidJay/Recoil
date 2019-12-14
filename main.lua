@@ -14,6 +14,13 @@ window = {
 	h = 800
 }
 
+--TODO: use these constants instead of config.cell_w
+CELL_WIDTH = 30
+CELL_HEIGHT = CELL_WIDTH
+
+--how thick the wall should be
+WALL_WIDTH = CELL_WIDTH * 2
+
 --list of various constants
 --these will be used all over the place so its better to have them here
 config = {
@@ -41,6 +48,7 @@ _G["print"] = function(...)
 	console.i(...)
 end
 
+--TODO incorporate camera in fullscreen
 --call this instead of love.window.setFullscreen
 fullscreen = nil
 function setFullscreen(value)
@@ -148,7 +156,10 @@ function love.load(arg)
 
 	require("wall")
 	require("game")
+	require("level")
+	require("camera")
 	require("states/playstate")
+	require("states/playstate2")
 	require("states/editorstate")
 	require("states/mainmenustate")
 	require("states/levelselectstate")
@@ -216,6 +227,8 @@ function love.update(dt)
 		end
 	end
 	mouse.x, mouse.y = love.mouse.getPosition()
+	mouse.cx = mouse.x + camera.x
+	mouse.cy = mouse.y + camera.y
 
 	game:update(math.min(1/60, dt*time_scale))
 
@@ -251,9 +264,8 @@ function love.draw()
 		love.graphics.translate(dx, dy)
 	end
 
-	love.graphics.setColor(0.8, 0.8, 0.8, 1)
-	love.graphics.rectangle("fill", 0, 0, window.w, window.h)
 	love.graphics.setColor(1, 1, 1, 1)
+	-- love.graphics.rectangle("fill", 0, 0, window.w, window.h)
 	game:draw()
 
 	love.graphics.setColor(0, 0, 0, 1)
