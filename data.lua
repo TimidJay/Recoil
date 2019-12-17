@@ -1,7 +1,7 @@
 data = {}
 
 --the keys are also known as id
-data.tiles = {
+data.tile = {
 	--args will contain all arguments after the i, j params, if they exist
 	--editor is the displayed image for the level editor
 	block = {class = Block, args = {}, editor = {name = "Regular Block", imgstr = "brick", rect = nil}},
@@ -41,26 +41,26 @@ data.tiles = {
 -- 	end
 -- end
 
-data.enemies = {
+data.enemy = {
 	turret1 = {class = Turret, args = {"up"}, editor = {name = "Turret (Up)", imgstr = "turret_editor", deg = 0}},
 	turret2 = {class = Turret, args = {"right"}, editor = {name = "Turret (Right)", imgstr = "turret_editor", deg = 90}},
 	turret3 = {class = Turret, args = {"down"}, editor = {name = "Turret (Down)", imgstr = "turret_editor", deg = 180}},
 	turret4 = {class = Turret, args = {"left"}, editor = {name = "Turret (Left)", imgstr = "turret_editor", deg = 270}},
 }
 
-data.items = {
+data.item = {
 	ammo = {class = Ammo, args = {}, editor = {name = "Ammo", imgstr = "bullet", w = 30, h = 30}}
 }
 
 --each value should also contain its own key
-for k, v in pairs(data.tiles) do
+for k, v in pairs(data.tile) do
 	v.key = k
 end
 
-for k, v in pairs(data.enemies) do
+for k, v in pairs(data.enemy) do
 	v.key = k
 end
 
-for k, v in pairs(data.items) do
+for k, v in pairs(data.item) do
 	v.key = k
 end

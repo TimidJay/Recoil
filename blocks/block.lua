@@ -7,8 +7,8 @@ Block = class("Block", Sprite)
 function Block:initialize(i, j)
 	local imgstr = "brick"
 	local rect = nil
-	local x = config.wall_l + (j-0.5)*config.cell_w
-	local y = config.ceil + (i-0.5)*config.cell_h
+	local x = WALL_WIDTH + (j-0.5)*CELL_WIDTH
+	local y = WALL_WIDTH + (i-0.5)*CELL_WIDTH
 	Sprite.initialize(self, imgstr, rect, 30, 30, x, y)
 	self.i, self.j = i, j
 	--the initial position of this shape won't matter

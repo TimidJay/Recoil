@@ -20,7 +20,7 @@ function MainMenuState:initialize()
 	
 	local editButton = make_button("Level Editor", cx - 200, cy + 240, 100, 30)
 	editButton.OnClick = function(obj, x, y)
-		game:push(EditorState:new())
+		game:push(EditorState:new(Level:new(30, 20)))
 	end
 
 	local fsButton = make_button("Toggle Fullscreen", cx + 240, cy + 200, 100, 30)

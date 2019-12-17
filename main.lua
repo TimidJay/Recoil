@@ -23,22 +23,22 @@ WALL_WIDTH = CELL_WIDTH * 2
 
 --list of various constants
 --these will be used all over the place so its better to have them here
-config = {
-	border_w = 25, --how thick should the border wall be
-	cell_w = 30, --each cell is a square
-	grid_w = 41, --how many cells wide
-	grid_h = 25 --how many cells tall
-}
+-- config = {
+-- 	border_w = 25, --how thick should the border wall be
+-- 	cell_w = 30, --each cell is a square
+-- 	grid_w = 41, --how many cells wide
+-- 	grid_h = 25 --how many cells tall
+-- }
 --aliases
-config.cell_h = config.cell_w
-config.rows = config.grid_h
-config.cols = config.grid_w
---derived constants
-config.floor = window.h - config.border_w
-config.wall_l = config.border_w
-config.wall_r = window.w - config.border_w
-config.ceil = config.border_w
-config.ceiling = config.ceil
+-- config.cell_h = config.cell_w
+-- config.rows = config.grid_h
+-- config.cols = config.grid_w
+-- --derived constants
+-- config.floor = window.h - config.border_w
+-- config.wall_l = config.border_w
+-- config.wall_r = window.w - config.border_w
+-- config.ceil = config.border_w
+-- config.ceiling = config.ceil
 
 local super_print = print
 
@@ -67,21 +67,22 @@ end
 
 --does not do bound checking
 function getGridPos(x, y)
-	local i = math.floor((y - config.ceil) / config.cell_h)
-	local j = math.floor((x - config.wall_l) / config.cell_w)
+	local i = math.floor((y - WALL_WIDTH) / CELL_WIDTH)
+	local j = math.floor((x - WALL_WIDTH) / CELL_WIDTH)
 	return i+1, j+1
 end
 
 --does the inverse of above function
 --returns the coords of the center the grid cell
 function getGridPosInv(i, j)
-	local cw = config.cell_w
-	return config.wall_l - cw/2 + (cw * j), config.ceil - cw/2 + (cw * i)
+	local cw = CELL_WIDTH
+	return WALL_WIDTH - cw/2 + (cw * j), WALL_WIDTH - cw/2 + (cw * i)
 end
 
-function boundCheck(i, j)
-	return i >= 1 and i <= config.rows and j >= 1 and j <= config.cols
-end
+--do not use this function
+-- function boundCheck(i, j)
+-- 	return i >= 1 and i <= config.rows and j >= 1 and j <= config.cols
+-- end
 
 mouse = {}
 keys = {}
@@ -159,7 +160,6 @@ function love.load(arg)
 	require("level")
 	require("camera")
 	require("states/playstate")
-	require("states/playstate2")
 	require("states/editorstate")
 	require("states/mainmenustate")
 	require("states/levelselectstate")

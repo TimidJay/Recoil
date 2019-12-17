@@ -2,58 +2,77 @@ EditorState = class("EditorState")
 
 tool = "free"
 
-function EditorState:initialize()
+function EditorState:initialize(level)
 	editorstate = self
 
 	self.className = "EditorState"
 
-	--grid starts at the top-left corner
-	self.grid = {}
-	self.allNodes = {} --allows for easy iteration across all nodes
-	for i = 1, config.grid_h do
-		local row = {}
-		for j = 1, config.grid_w do
-			local node = GridNode:new(self, i, j)
-			table.insert(row, node)
-			table.insert(self.allNodes, node)
-			--place blocks on the edges of the grid
-			if i == 1 or i == config.grid_h or j == 1 or j == config.grid_w then
-				node:setTile("block")
-			end
-		end
-		table.insert(self.grid, row)
-	end
+	--level will contain the grid
+	-- self.level = level
+	self:setLevel(level)
 
-	self.gates = {
-		enter = Gate:new("enter", 22, 1, "left", false),
-		exit = Gate:new("exit", 22, config.grid_w, "right", false)
-	}
-	self.entranceGate = Gate:new("enter", 22, 1, "left", false)
-	self.exitGate = Gate:new("exit", 22, config.grid_w, "right", false)
-	self:setOverlap()
+	-- self:initGridLines()
+	-- self.allNodes = self.level.allNodes
 
-	--holes can be added to the bottom wall
-	self.pit = {} --work in progress
-
-	--new
 	self.selectedType = "tile"
 	self.selectedValue = "block"
 
 	self.actuatorCheck = false
 
-	--old
-	-- self.selectedTile = "block"
-	-- self.selectedActuator = nil
-
 	--gui stuff
 	self.frames = {}
 
 	--the default OnClose function deletes the frame
-	--however, I only want the frame to be hidden
+	--however, I only want to hide the frame
 	local hide = function(obj)
 		obj:SetVisible(false)
 		return false
 	end
+
+	--resizing window
+	local frame = loveframes.Create("frame")
+	frame.OnClose = hide
+	frame:SetName("Resize Level")
+	frame:SetPos(window.w - 500, 300)
+	frame:SetSize(200, 180)
+	frame:SetState("EditorState")
+
+	local numbox1 = loveframes.Create("textinput", frame)
+	numbox1:SetPos(125, 40)
+	numbox1:SetSize(40, 18)
+	numbox1:SetText(tostring(level.grid_w))
+	local text1 = loveframes.Create("text", frame)
+	text1:SetText("# of cells wide:")
+	text1:SetPos(30, 40)
+
+	local numbox2 = loveframes.Create("textinput", frame)
+	numbox2:SetPos(125, 70)
+	numbox2:SetSize(40, 18)
+	numbox2:SetText(tostring(level.grid_h))
+	local text2 = loveframes.Create("text", frame)
+	text2:SetText("# of cells high:")
+	text2:SetPos(30, 70)
+
+	local warning = loveframes.Create("text", frame)
+	warning:SetDefaultColor(1, 0, 0, 1)
+	warning:SetText("WARNING: Level will be\ncleared upon Resizing.")
+	warning:SetPos(30, 100)
+
+	local butt = loveframes.Create("button", frame)
+	butt:SetText("Resize")
+	butt:SetPos(60, 140)
+	butt.OnClick = function(obj, x, y)
+		local w = tonumber(numbox1:GetText())
+		local h = tonumber(numbox2:GetText())
+		if not w or not h then return end
+		if not (w >= 5 and w <= 100) then return end
+		if not (h >= 5 and h <= 100) then return end
+
+		self:setLevel(Level:new(w, h))
+	end
+
+
+	self.frames.rezize = frame
 
 	--tool stuff
 	local frame = loveframes.Create("frame")
@@ -120,7 +139,7 @@ function EditorState:initialize()
 		"oneway4",
 	}
 	for i, key in ipairs(tileKeys) do
-		local tileData = data.tiles[key]
+		local tileData = data.tile[key]
 		local button = loveframes.Create("button", frame)
 		button:SetText(tileData.editor.name)
 		button.OnClick = function(obj, x, y)
@@ -135,7 +154,7 @@ function EditorState:initialize()
 	--temorary turret buttons
 	for i = 1, 4 do
 		local key = "turret"..i
-		local enemyData = data.enemies[key]
+		local enemyData = data.enemy[key]
 		local button = loveframes.Create("button", frame)
 		button:SetText(enemyData.editor.name)
 		button.OnClick = function(obj, x, y)
@@ -145,7 +164,7 @@ function EditorState:initialize()
 	end
 
 	local button = loveframes.Create("button", frame)
-	local itemData = data.items["ammo"]
+	local itemData = data.item["ammo"]
 	button:SetText(itemData.editor.name)
 	button.OnClick = function(obj, x, y)
 		self:select("item", "ammo")
@@ -378,6 +397,13 @@ function EditorState:initialize()
 	end
 end
 
+function EditorState:setLevel(level)
+	self.level = level
+	self:initGridLines()
+	self.allNodes = self.level.allNodes
+	camera:clampToLevel(self.level)
+end
+
 function EditorState:close()
 	editorstate = nil
 end
@@ -531,12 +557,13 @@ end
 
 --sets overlap grid for non-tile objects such as gates
 function EditorState:setOverlap()
+	local level = self.level
 	local overlap = {}
-	for i = 1,  config.grid_w do
+	for i = 1,  level.grid_w do
 		overlap[i] = {}
 	end
-	for k, g in pairs(self.gates) do
-		local t = g:getOccupied()
+	for k, g in pairs(level.gates) do
+		local t = g:getOccupiedCoords()
 		for _, p in ipairs(t) do
 			local i, j = p[1], p[2]
 			overlap[i][j] = k --Only one object can occupy a cell at a time
@@ -545,8 +572,20 @@ function EditorState:setOverlap()
 	self.overlap = overlap
 end
 
+--checks if node is already occupied by a gate (or other objects?)
+function EditorState:notOverlapping(node)
+	for k, gate in pairs(self.level.gates) do
+		if gate.occupied[node] then
+			return false
+		end
+	end
+	return true
+end
+
 --checks if the gate does not overlap the other gate
 function EditorState:gateValidPos(choice, name)
+	local level = self.level
+
 	local i, j = choice[3], choice[4]
 	local dir = choice[1]
 	local t = {}
@@ -559,10 +598,11 @@ function EditorState:gateValidPos(choice, name)
 			table.insert(t, {i+d, j})
 		end
 	end
-	local overlap = self.overlap
+
+	local other = level.gates[(name == "enter") and "exit" or "enter"]
 	for _, v in ipairs(t) do
-		local o = overlap[v[1]][v[2]]
-		if o ~= nil and o ~= name then
+		local node = level.objectGrid[v[1]][v[2]]
+		if other.occupied[node] then
 			return false
 		end
 	end
@@ -570,8 +610,12 @@ function EditorState:gateValidPos(choice, name)
 end
 
 function EditorState:update(dt)
-	local mx, my = mouse.x, mouse.y
+
+	local mx, my = mouse.cx, mouse.cy
 	local mi, mj = getGridPos(mx, my)
+
+	local level = self.level
+	local grid = level.objectGrid
 
 	if keys.escape then
 
@@ -591,16 +635,20 @@ function EditorState:update(dt)
 	end
 
 	--dragging gates around
-	if mouse.m1 == 1 and self.gates.enter:containMouse() then
+	local gates = level.gates
+
+	if mouse.m1 == 1 and gates.enter:containMouse() then
 		self.drag = "enter"
-	elseif mouse.m1 == 1 and self.gates.exit:containMouse() then
+	elseif mouse.m1 == 1 and gates.exit:containMouse() then
 		self.drag = "exit"
 	end
+
 	if self.drag then
-		local gate = self.gates[self.drag]
+		local gate = gates[self.drag]
+		gate.dragged = true
 		--get closest point to edge
-		local gw, gh = config.grid_w, config.grid_h
-		local i, j = getGridPos(mouse.x, mouse.y)
+		local gw, gh = level.grid_w, level.grid_h
+		local i, j = mi, mj
 		i2 = math.min(math.max(i, 3), gh - 2)
 		j2 = math.min(math.max(j, 3), gw - 2)
 		local candidates = {
@@ -623,23 +671,28 @@ function EditorState:update(dt)
 		--after dragging is done, update the overlap grid
 		if not mouse.m1 then
 			self.drag = nil
-			self:setOverlap()
+			gate.dragged = false
+			gate:setOccupiedNodes()
+			gate:clearOccupiedNodes()
+			gate:setHoles()
 		end
 	--tool usage
-	elseif boundCheck(mi, mj) then
+	elseif self.level:boundCheck(mi, mj) then
 		if tool == "free" then
-			local node = self.grid[mi][mj]
+			local node = grid[mi][mj]
 			node.highlight = true
 
-			if mouse.m1 then
-				node:setObject(self.selectedType, self.selectedValue)
-				-- if self.selectedActuator then
-				-- 	node:setActuator(self.selectedActuator)
-				-- else
-				-- 	node:setTile(self.selectedTile)
-				-- end
-			elseif mouse.m2 then
-				node:clear()
+			if self:notOverlapping(node) then
+				if mouse.m1 then
+					node:setObject(self.selectedType, self.selectedValue)
+					-- if self.selectedActuator then
+					-- 	node:setActuator(self.selectedActuator)
+					-- else
+					-- 	node:setTile(self.selectedTile)
+					-- end
+				elseif mouse.m2 then
+					node:clear()
+				end
 			end
 		elseif tool == "rect" or tool == "fillrect" then
 			if mouse.m1 or mouse.m2 then
@@ -666,7 +719,7 @@ function EditorState:update(dt)
 					for i = i0, i1 do
 						for j = j0, j1 do
 							if tool == "fillrect" or i == i0 or i == i1 or j == j0 or j == j1 then
-								local node = self.grid[i][j]
+								local node = grid[i][j]
 								node.highlight = true
 								table.insert(self.selectedNodes, node)
 							end
@@ -675,15 +728,17 @@ function EditorState:update(dt)
 				end
 			elseif self.clicked then
 				for _, node in ipairs(self.selectedNodes) do
-					if self.clicked.mode == 1 then
-						node:setObject(self.selectedType, self.selectedValue)
-						-- if self.selectedActuator then
-						-- 	node:setActuator(self.selectedActuator)
-						-- else
-						-- 	node:setTile(self.selectedTile)
-						-- end
-					else
-						node:clear()
+					if self:notOverlapping(node) then
+						if self.clicked.mode == 1 then
+							node:setObject(self.selectedType, self.selectedValue)
+							-- if self.selectedActuator then
+							-- 	node:setActuator(self.selectedActuator)
+							-- else
+							-- 	node:setTile(self.selectedTile)
+							-- end
+						else
+							node:clear()
+						end
 					end
 				end
 				self.clicked = nil
@@ -691,19 +746,48 @@ function EditorState:update(dt)
 
 		end
 	--pit placement
-	elseif mi == config.grid_h + 1  and mj >= 1 and mj <= config.grid_w then
-		if mouse.m1 then
-			-- game.walls.down:setHole(mi, mj, true)
-			self.pit[mj] = true
-		elseif mouse.m2 then
-			-- game.walls.down:setHole(mi, mj, false)
-			self.pit[mj] = nil
+	elseif (mi > level.grid_h and mi < level.grid_h + 3)  and mj >= 1 and mj <= level.grid_w then
+		local wall = level.walls.down
+		local val = wall:getHole(0, mj)
+		if (val == "normal") or (not val) then
+			if mouse.m2 then
+				wall:setHole(0, mj, "normal")
+			elseif mouse.m1 then
+				wall:setHole(0, mj, false)
+			end
 		end
 	end
+
+	--camera movement
+	local camera_speed = 500
+	local dx, dy = 0, 0
+
+	--move if mouse cursor is at edge of screen
+	--but what about the gui elements?
+	-- local x, y = mouse.x, mouse.y
+	-- local band_w = CELL_WIDTH
+
+	-- if x <= band_w then dx = -1 end
+	-- if x >= window.w - band_w then dx = 1 end
+	-- if y <= band_w then dy = -1 end
+	-- if y >= window.h - band_w then dy = 1 end
+
+	if love.keyboard.isDown("w") then dy = -1 end
+	if love.keyboard.isDown("a") then dx = -1 end
+	if love.keyboard.isDown("s") then dy = 1 end
+	if love.keyboard.isDown("d") then dx = 1 end
+	camera.x = camera.x + dx * dt * camera_speed
+	camera.y = camera.y + dy * dt * camera_speed
+	camera:clampToLevel(self.level)
 end
 
 -- switches the game to test mode
+
 function EditorState:startTest()
+	game:push(PlayState:new(self.level))
+end
+
+function EditorState:startTestOLD()
 	for _, n in ipairs(self.allNodes) do
 		if not self.overlap[n.i][n.j] then
 			if n.tile then
@@ -727,7 +811,7 @@ function EditorState:startTest()
 	end
 
 	for _, gate in pairs(game.gates) do
-		local holes = gate:getOccupied(true)
+		local holes = gate:getOccupiedCoords(true)
 		local wall = game.walls[gate.dir]
 		for _, t in ipairs(holes) do
 			wall:setHole(t[1], t[2], true)
@@ -742,35 +826,21 @@ function EditorState:startTest()
 	local exit = self.gates.exit
 	game.exit = {
 		dir = exit.dir,
-		coords = exit:getOccupied(true)
+		coords = exit:getOccupiedCoords(true)
 	}
 
 	game:push(PlayState:new("test"))
 end
 
 function EditorState:draw()
-	-- love.graphics.setColor(0.5, 0.5, 0.5, 1)
-	-- local rec = love.graphics.rectangle
-	-- rec("fill" , 0, config.floor, window.w, config.border_w) --floor
-	-- rec("fill" , 0, 0, window.w, config.border_w) --ceiling
-	-- rec("fill" , 0, 0, config.border_w, window.h) --left wall
-	-- rec("fill" , config.wall_r, 0, config.border_w, window.h) --right wall
 
-	for _, w in pairs(game.walls) do
+	--any HUD elements should be drawn separate from the camera space
+	camera:push()
+
+	self.level:drawBackground()
+
+	for k, w in pairs(self.level.walls) do
 		w:draw()
-	end
-
-	--draw gridlines
-	love.graphics.setColor(0, 0, 0, 1)
-	love.graphics.setLineStyle("rough")
-	love.graphics.setLineWidth(1)
-	for i = 1, config.grid_h+1 do
-		local y = config.ceil + (i-1) * config.cell_w
-		util.lineStipple(0, y, window.w, y, 3, 4)
-	end
-	for j = 1, config.grid_w+1 do
-		local x = config.ceil + (j-1) * config.cell_h
-		util.lineStipple(x, 0, x, window.h, 3, 4)
 	end
 
 	--draw gridnodes (cells)
@@ -778,167 +848,69 @@ function EditorState:draw()
 		node:draw()
 	end
 
-	self.gates.enter:draw()
-	self.gates.exit:draw()
-
+	for k, g in pairs(self.level.gates) do
+		g:draw()
+	end
 	for _, node in ipairs(self.allNodes) do
 		node:drawHighlight()
 	end
-
 	--draw proposed pit
-	local dwall = game.walls.down
-	local cell_w = config.cell_w
-	local border_w = config.border_w
+	-- local dwall = game.walls.down
+	-- local cell_w = config.cell_w
+	-- local border_w = config.border_w
+	-- love.graphics.setColor(0, 0, 0, 1)
+	-- for j, v in pairs(self.pit) do
+	-- 	love.graphics.rectangle("fill", border_w + (j-1) * cell_w, dwall.y, cell_w, dwall.h)
+	-- end
+
+	self:drawGridLines()
+
+	camera:pop()
+end
+
+--predraw the gridlines to a canvas because drawing dashed lines
+--is really expensive
+--Might have to set a level size limit or else the canvas get too big
+function EditorState:initGridLines()
+	local level = self.level
+
+	local canvas = love.graphics.newCanvas(level.fullWidth, level.fullHeight)
+	love.graphics.setCanvas(canvas)
+
 	love.graphics.setColor(0, 0, 0, 1)
-	for j, v in pairs(self.pit) do
-		love.graphics.rectangle("fill", border_w + (j-1) * cell_w, dwall.y, cell_w, dwall.h)
-	end
-end
+	love.graphics.setLineStyle("rough")
+	love.graphics.setLineWidth(1)
+	
+	local grid_w = level.grid_w
+	local grid_h = level.grid_h
+	local width = level.fullWidth
+	local height = level.fullHeight
+	local start = level.inner_y0
 
-GridNode = class("GridNode")
-
--- i, j = row, column
-function GridNode:initialize(editorstate, i, j)
-	self.editorstate = editorstate
-	self.i, self.j = i, j
-	--the x, y coordinates are located at the center of the cell
-	self.x = config.wall_l + (j-0.5)*config.cell_w
-	self.y = config.ceil + (i-0.5)*config.cell_h
-	self.w, self.h = config.cell_w, config.cell_h
-
-	self.tile = nil
-	self.enemy = nil
-	self.item = nil
-	self.actuator = nil
-	self.highlight = false
-end
-
-function GridNode:setTile(tileKey)
-	--tiles and enemies can't occupy the same space
-	self.tile = data.tiles[tileKey]
-	self.enemy = nil
-	self.item = nil
-end
-
-function GridNode:setEnemy(enemyKey)
-	self.tile = nil
-	self.enemy = data.enemies[enemyKey]
-	self.acuator = nil
-	self.item = nil
-end
-
-function GridNode:setItem(itemKey)
-	self.tile = nil
-	self.enemy = nil
-	self.actuator = nil
-	self.item = data.items[itemKey]
-end
-
-function GridNode:setActuator(value)
-	if not value then
-		self.actuator = nil
-		return
-	end
-	if self.tile then
-		self.actuator = value
-		self.actuatorColor = SwitchBlock.colors[value]
-	end
-end
-
---generic setter function that combines the above functions
-function GridNode:setObject(objType, value)
-	if objType == "tile" then
-		self:setTile(value)
-	elseif objType == "enemy" then
-		self:setEnemy(value)
-	elseif objType == "item" then
-		self:setItem(value)
-	elseif objType == "actuator" then
-		self:setActuator(value)
-	end
-end
-
-function GridNode:clear()
-	self.tile = nil
-	self.enemy = nil
-	self.item = nil
-	self.actuator = nil
-end
-
-function GridNode:makeTile()
-	if not self.tile then return nil end
-
-	local class = self.tile.class
-	local args = self.tile.args
-	local tile = class:new(self.i, self.j, unpack(args))
-	tile:setActuator(self.actuator)
-	return tile
-end
-
-function GridNode:makeEnemy()
-	if not self.enemy then return nil end
-
-	local class = self.enemy.class
-	local args = self.enemy.args
-	local enemy = class:new(self.i, self.j, unpack(args))
-	return enemy
-end
-
-function GridNode:makeItem()
-	if not self.item then return nil end
-
-	local class = self.item.class
-	local args = self.item.args
-	local item = class:new(self.i, self.j, unpack(args))
-	return item
-end
-
-function GridNode:draw()
-	if self.tile then
-		local t = self.tile.editor
-		local rad = 0
-		if t.deg then
-			rad = math.rad(t.deg)
+	--don't use util.lineStipple because it's very expensive
+	local line = love.graphics.line
+	for i = 1, grid_h+1 do
+		local y = start + (i-1) * CELL_WIDTH
+		local x0, x1 = 0, 8
+		while(x1 < width) do
+			line(x0, y, x1, y)
+			x0, x1 = x0 + 10, x1 + 10
 		end
-		if t.color then
-			love.graphics.setColor(unpack(t.color))
-		else
-			love.graphics.setColor(1, 1, 1, 1)
+	end
+	for j = 1, grid_w+1 do
+		local x = start + (j-1) * CELL_WIDTH 
+		local y0, y1 = 0, 8
+		while (y1 < height) do
+			line(x, y0, x, y1)
+			y0, y1 = y0 + 10, y1 + 10
 		end
-		draw(t.imgstr, t.rect, self.x, self.y, rad, self.w, self.h)
 	end
-	if self.enemy then
-		local t = self.enemy.editor
-		local rad = 0
-		if t.deg then
-			rad = math.rad(t.deg)
-		end
-		draw(t.imgstr, t.rect, self.x, self.y, rad, self.w, self.h)
-	end
-	if self.item then
-		local t = self.item.editor
-		local w, h = self.w, self.h
-		if t.w and t.h then
-			w, h = t.w, t.h
-		end
-		draw(t.imgstr, t.rect, self.x, self.y, 0, w, h)
-	end
-	if self.actuator then
-		love.graphics.setColor(unpack(self.actuatorColor))
-		draw("actuator", nil, self.x, self.y, 0, self.w, self.h)
-	end
+
+	love.graphics.setCanvas()
+	self.gridLineCanvas = canvas
 end
 
---separated so the highlight can be drawn on top of things
-function GridNode:drawHighlight()
-	if self.highlight then
-		love.graphics.setColor(1, 1, 0, 0.25)
-		love.graphics.rectangle(
-			"fill", 
-			self.x - self.w/2, 
-			self.y - self.h/2,
-			self.w,
-			self.h
-		)
-	end
+function EditorState:drawGridLines()
+	love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.draw(self.gridLineCanvas)
 end

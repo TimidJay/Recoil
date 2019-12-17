@@ -1,11 +1,13 @@
 Level = class("Level")
 
+--Level should only be directly modified by EditorState
+
 --Level is a structure that contains all level data
 --I'm undecided whether or not Level should be a singleton
 --Maybe level should be the bridge between Editorstate and Playstate
 
 --Level should be in charge of saving/loading files
---Level should be able to create all objects
+--Level should be able to create all objects for playing
 
 function Level:initialize(grid_w, grid_h)
 	--grid_w is how many cells wide
@@ -32,14 +34,59 @@ function Level:initialize(grid_w, grid_h)
 	--currently only one object can occupy a cell at a time
 	--not sure if that will change later 
 	self.objectGrid = {}
-	for i = 1, self.grid_w do
+	self.allNodes = {}
+	for i = 1, self.grid_h do
 		local row = {}
-		for j = 1, self.grid_h do
-			table.insert(row, {})
+		for j = 1, self.grid_w do
+			local node = GridNode:new(self, i, j)
+			table.insert(row, node)
+			table.insert(self.allNodes, node)
 		end
 		table.insert(self.objectGrid, row)
 	end
+
+	--walls will remain static for the entire level
+	--so they can be created here
+	--Don't forget to initialize their shapes later
+	self:initializeWalls()
+	self:initializeGates()
+
+	--initialize a border of blocks
+	for i = 1, self.grid_h do
+		for j = 1, self.grid_w do
+			if (i == 1 or i == self.grid_h) or (j == 1 or j == self.grid_w) then
+				local node = self.objectGrid[i][j]
+				if not self.gates.enter.occupied[node] and not self.gates.exit.occupied[node] then
+					node:setObject("tile", "block")
+				end
+			end
+		end
+	end
 end
+
+function Level:initializeWalls()
+	local walls = {
+		left  = Wall:new("left" , self.x0, self.inner_x0, self.y0, self.y1, self),
+		right = Wall:new("right", self.inner_x1, self.x1, self.y0, self.y1, self),
+		up    = Wall:new("up"   , self.x0, self.x1, self.y0, self.inner_y0, self),
+		down  = Wall:new("down" , self.x0, self.x1, self.inner_y1, self.y1, self)
+	}
+	self.walls = walls
+end
+
+function Level:initializeGates()
+	local ci = math.floor(self.grid_h / 2)
+	local gates = {
+		enter = Gate:new("enter", ci, 1, "left", self),
+		exit = Gate:new("exit", ci, self.grid_w, "right", self)
+	}
+	gates.enter:setOccupiedNodes()
+	gates.exit:setOccupiedNodes()
+	gates.enter:setHoles()
+	gates.exit:setHoles()
+	self.gates = gates
+end
+
 
 function Level:save()
 end
@@ -48,22 +95,53 @@ end
 function Level:load()
 end
 
---the walls should surround the playable area
-function Level:createWalls()
-	local walls = {
-		left  = Wall:new("left" , self.x0, self.inner_x0, self.y0, self.y1, self),
-		right = Wall:new("right", self.inner_x1, self.x1, self.y0, self.y1, self),
-		up    = Wall:new("up"   , self.x0, self.x1, self.y0, self.inner_y0, self),
-		down  = Wall:new("down" , self.x0, self.x1, self.inner_y1, self.y1, self)
-	}
-	return walls
+function Level:boundCheck(i, j)
+	return i >= 1 and i <= self.grid_h and j >= 1 and j <= self.grid_w
+end
+
+--sets up all of the game objects for playing
+function Level:play()
+	self:createObjects()
+	self:copyWalls()
+	self:copyGates()
 end
 
 --create all objects in objectGrid
 --returns a table of lists of objects
 function Level:createObjects()
+	for _, n in ipairs(self.allNodes) do
+		local obj = n:makeObject()
+		if obj then
+			local t = n.objType
+			if t == "tile" then
+				table.insert(game.tiles, obj)
+			elseif t == "enemy" then
+				table.insert(game.enemies, obj)
+			elseif t == "item" then
+				table.insert(game.items, obj)
+			end
+		end
+	end
 end
 
+--copy walls and add pits
+--Gate holes should be added after
+function Level:copyWalls()
+	for k, wall in pairs(self.walls) do
+		local w2 = wall:copy()
+		game.walls[k] = w2
+		w2:activate()
+	end
+end
+
+--copy gates and activate them
+function Level:copyGates()
+	for k, gate in pairs(self.gates) do
+		local g2 = gate:copy()
+		game.gates[k] = g2
+		g2:activate()
+	end
+end
 
 --add an actual background graphic later
 function Level:drawBackground()
@@ -84,106 +162,60 @@ end
 GridNode = class("GridNode")
 
 -- i, j = row, column
-function GridNode:initialize(editorstate, i, j)
-	self.editorstate = editorstate
+function GridNode:initialize(level, i, j)
+	self.level = level
 	self.i, self.j = i, j
 	--the x, y coordinates are located at the center of the cell
-	self.x = config.wall_l + (j-0.5)*config.cell_w
-	self.y = config.ceil + (i-0.5)*config.cell_h
-	self.w, self.h = config.cell_w, config.cell_h
+	self.x = level.inner_x0 + (j-0.5) * CELL_WIDTH
+	self.y = level.inner_y0 + (i-0.5)* CELL_WIDTH
+	self.w, self.h = CELL_WIDTH, CELL_WIDTH
 
-	self.tile = nil
-	self.enemy = nil
-	self.item = nil
+	self.object = nil
 	self.actuator = nil
 	self.highlight = false
 end
 
-function GridNode:setTile(tileKey)
-	--tiles and enemies can't occupy the same space
-	self.tile = data.tiles[tileKey]
-	self.enemy = nil
-	self.item = nil
-end
-
-function GridNode:setEnemy(enemyKey)
-	self.tile = nil
-	self.enemy = data.enemies[enemyKey]
-	self.acuator = nil
-	self.item = nil
-end
-
-function GridNode:setItem(itemKey)
-	self.tile = nil
-	self.enemy = nil
-	self.actuator = nil
-	self.item = data.items[itemKey]
-end
-
-function GridNode:setActuator(value)
-	if not value then
+function GridNode:setObject(objType, key)
+	if objType == "actuator" then
+		if self.objType == "tile" then
+			self.actuator = key
+			self.actuatorColor = SwitchBlock.colors(key)
+		end
+	else
+		self.objType = objType
+		self.object = data[objType][key]
 		self.actuator = nil
-		return
-	end
-	if self.tile then
-		self.actuator = value
-		self.actuatorColor = SwitchBlock.colors[value]
-	end
-end
-
---generic setter function that combines the above functions
-
-
-function GridNode:setObject(objType, value)
-	if objType == "tile" then
-		self:setTile(value)
-	elseif objType == "enemy" then
-		self:setEnemy(value)
-	elseif objType == "item" then
-		self:setItem(value)
-	elseif objType == "actuator" then
-		self:setActuator(value)
 	end
 end
 
 function GridNode:clear()
-	self.tile = nil
-	self.enemy = nil
-	self.item = nil
+	self.objType = nil
+	self.object = nil
 	self.actuator = nil
 end
 
-function GridNode:makeTile()
-	if not self.tile then return nil end
+--does not return its type
+function GridNode:makeObject()
+	if not self.object then return nil end
 
-	local class = self.tile.class
-	local args = self.tile.args
-	local tile = class:new(self.i, self.j, unpack(args))
-	tile:setActuator(self.actuator)
-	return tile
-end
+	local class = self.object.class
+	local args = self.object.args
+	local obj = class:new(self.i, self.j, unpack(args))
 
-function GridNode:makeEnemy()
-	if not self.enemy then return nil end
+	if self.objType == "tile" and self.actuator then
+		obj:setActuator(self.actuator)
+	end
 
-	local class = self.enemy.class
-	local args = self.enemy.args
-	local enemy = class:new(self.i, self.j, unpack(args))
-	return enemy
-end
-
-function GridNode:makeItem()
-	if not self.item then return nil end
-
-	local class = self.item.class
-	local args = self.item.args
-	local item = class:new(self.i, self.j, unpack(args))
-	return item
+	return obj
 end
 
 function GridNode:draw()
-	if self.tile then
-		local t = self.tile.editor
+	if self.object then
+		local t = self.object.editor
+		local w, h = self.w, self.h
+		if t.w and t.h then
+			w, h = t.w, t.h
+		end
 		local rad = 0
 		if t.deg then
 			rad = math.rad(t.deg)
@@ -193,23 +225,7 @@ function GridNode:draw()
 		else
 			love.graphics.setColor(1, 1, 1, 1)
 		end
-		draw(t.imgstr, t.rect, self.x, self.y, rad, self.w, self.h)
-	end
-	if self.enemy then
-		local t = self.enemy.editor
-		local rad = 0
-		if t.deg then
-			rad = math.rad(t.deg)
-		end
-		draw(t.imgstr, t.rect, self.x, self.y, rad, self.w, self.h)
-	end
-	if self.item then
-		local t = self.item.editor
-		local w, h = self.w, self.h
-		if t.w and t.h then
-			w, h = t.w, t.h
-		end
-		draw(t.imgstr, t.rect, self.x, self.y, 0, w, h)
+		draw(t.imgstr, t.rect, self.x, self.y, rad, w, h)
 	end
 	if self.actuator then
 		love.graphics.setColor(unpack(self.actuatorColor))

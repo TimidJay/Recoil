@@ -6,50 +6,20 @@ local bl = {0, 0, 0, 1} --black
 local cl = {0, 0, 0, 0} --clear
 local grad = util.gradientMesh
 
-Wall.data = {
-	left = {
-		x = 0, 
-		y = 0,
-		w = WALL_WIDTH,
-		h = window.h,
-		gr = grad("horizontal", bl, cl)
-	},
-	right = {
-		x = window.w - WALL_WIDTH,
-		y = 0,
-		w = WALL_WIDTH,
-		h = window.h,
-		gr = grad("horizontal", cl, bl)
-	},
-	up = {
-		x = 0,
-		y = 0,
-		w = window.w,
-		h = WALL_WIDTH,
-		gr = grad("vertical", bl, cl)
-
-	},
-	down = {
-		x = 0,
-		y = window.h - WALL_WIDTH,
-		w = window.w,
-		h = WALL_WIDTH,
-		gr = grad("vertical", cl, bl)
-	}
+local gradients = {
+	left = grad("horizontal", bl, cl),
+	right = grad("horizontal", cl, bl),
+	up = grad("vertical", bl, cl),
+	down = grad("vertical", cl, bl)
 }
 
 --dir left, right, up, down
 --xn and yn values are the edges
 --level is temp?
 function Wall:initialize(dir, x0, x1, y0, y1, level)
+	self.level = level
 	self.dir = dir
-	local t = Wall.data[dir]
-	--x and y denote top left corner instead of middle
-	-- self.x = t.x
-	-- self.y = t.y
-	-- self.w = t.w
-	-- self.h = t.h
-	-- self.gr = t.gr
+	self.gr = gradients[dir]
 
 	self.x = x0
 	self.y = y0
@@ -60,17 +30,32 @@ function Wall:initialize(dir, x0, x1, y0, y1, level)
 
 	self.holes = {}
 	if dir == "up" or dir == "down" then
-		for i = 1, level.grid_w do
-			self.holes[i] = false
-		end
+		-- for i = 1, level.grid_w do
+		-- 	self.holes[i] = false
+		-- end
+		self.maxHoles = level.grid_w
 	else
-		for i = 1, level.grid_h do
-			self.holes[i] = false
-		end
+		-- for i = 1, level.grid_h do
+		-- 	self.holes[i] = false
+		-- end
+		self.maxHoles = level.grid_h
 	end
 
 	-- self.shape = util.newRectangleShape(self.w, self.h, self.x, self.y)
 	self.shapes = {}
+end
+
+--TODO: Add pits (0)
+function Wall:copy()
+	local wall = Wall:new(self.dir, self.x0, self.x1, self.y0, self.y1, self.level)
+	for k, v in pairs(self.holes) do
+		wall.holes[k] = v
+	end
+	return wall
+end
+
+function Wall:activate()
+	self:createShapes()
 end
 
 function Wall:reset()
@@ -79,8 +64,9 @@ function Wall:reset()
 end
 
 --based on the wall's direction, either i or j will be ignored
---set to either true or false
+--set to either false, "normal", "enter", "exit"
 function Wall:setHole(i, j, value)
+	if not value then value = nil end
 	if self.dir == "up" or self.dir == "down" then
 		self.holes[j] = value
 	else
@@ -88,26 +74,17 @@ function Wall:setHole(i, j, value)
 	end
 end
 
---based on the wall's direction, either i or j will be ignored
-function Wall:addHole(i, j)
+function Wall:getHole(i, j)
 	if self.dir == "up" or self.dir == "down" then
-		self.holes[j] = true
+		return self.holes[j]
 	else
-		self.holes[i] = true
-	end
-end
-
-function Wall:removeHole(i, j)
-	if self.dir == "up" or self.dir == "down" then
-		self.holes[j] = false
-	else
-		self.holes[i] = false
+		return self.holes[i]
 	end
 end
 
 function Wall:clearHoles()
 	for k, v in ipairs(self.holes) do
-		self.holes[k] = false
+		self.holes[k] = nil
 	end
 end
 
@@ -116,7 +93,8 @@ function Wall:createShapes()
 	--calculate wall segments
 	local segments = {}
 	local seg = nil
-	for i, hole in ipairs(self.holes) do
+	for i = 1, self.maxHoles do
+		local hole = self.holes[i]
 		if seg then
 			if hole then
 				table.insert(segments, seg)
@@ -219,12 +197,13 @@ function Wall:draw()
 		--draw corners
 		rect("fill", 0                  , self.y, WALL_WIDTH, WALL_WIDTH) --left corner
 		rect("fill", self.w - WALL_WIDTH, self.y, WALL_WIDTH, WALL_WIDTH) --right corner
-		for j, v in ipairs(self.holes) do
+		for j = 1, self.maxHoles do
+			local hole = self.holes[j]
 			local x = WALL_WIDTH + (j-1) * CELL_WIDTH
 			local y = self.y
 			local dy = self.dir == "up" and 0 or -gr_w
 			local dh = gr_w
-			if v then
+			if hole then
 				love.graphics.setColor(1, 1, 1, 1)
 				love.graphics.draw(self.gr, x, y + dy, 0, CELL_WIDTH, self.h + dh)
 			else
@@ -234,12 +213,13 @@ function Wall:draw()
 		end
 	else
 		--corners are already filled by up and down walls
-		for i, v in ipairs(self.holes) do
+		for i = 1, self.maxHoles do
+			local hole = self.holes[i]
 			local x = self.x
 			local y = WALL_WIDTH + (i-1) * CELL_WIDTH
 			local dx = self.dir == "left" and 0 or -gr_w
 			local dw = gr_w
-			if v then
+			if hole then
 				love.graphics.setColor(1, 1, 1, 1)
 				love.graphics.draw(self.gr, x + dx, y, 0, self.w + dw, CELL_WIDTH)
 			else

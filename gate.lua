@@ -3,31 +3,39 @@ Gate = class("Gate", Sprite)
 --Gate has 2 types: enter and exit
 --Gates are initially unactivated for use in EditorState
 --Gate consists of 3 sprites, left, middle, right
-function Gate:initialize(gateType, i, j, dir, activate)
+function Gate:initialize(gateType, i, j, dir, level)
 	self.type = gateType
-	local y = self.type == "enter" and 0 or 15
-	local cell_w = config.cell_w
-	-- Sprite.initialize(self, "gate", make_rect(0, y, 75, 15), config.cell_w*5, config.cell_w)
-	Sprite.initialize(self, nil, nil, cell_w*5, cell_w)
-	self.left = Sprite:new("gate", make_rect(0, y, 15, 15), cell_w, cell_w)
-	self.middle = Sprite:new("gate", make_rect(15, y, 45, 15), cell_w*3, cell_w)
-	self.right = Sprite:new("gate", make_rect(60, y, 15, 15), cell_w, cell_w)
-
-	self:setShape(util.newRectangleShape(cell_w*5, cell_w))
-	self.left:setShape(util.newRectangleShape(cell_w, cell_w))
-	self.right:setShape(util.newRectangleShape(cell_w, cell_w))
-
-	self.offset = cell_w*2
-	self.dir = "down"
+	self.level = level
 
 	self.i, self.j = i, j
+	self.offset = CELL_WIDTH*2
+
+	local y = self.type == "enter" and 0 or 15
+	-- Sprite.initialize(self, "gate", make_rect(0, y, 75, 15), config.cell_w*5, config.cell_w)
+	Sprite.initialize(self, nil, nil, CELL_WIDTH*5, CELL_WIDTH)
+	self.left = Sprite:new("gate", make_rect(0, y, 15, 15), CELL_WIDTH, CELL_WIDTH)
+	self.middle = Sprite:new("gate", make_rect(15, y, 45, 15), CELL_WIDTH*3, CELL_WIDTH)
+	self.right = Sprite:new("gate", make_rect(60, y, 15, 15), CELL_WIDTH, CELL_WIDTH)
+
+	self:setShape(util.newRectangleShape(CELL_WIDTH*5, CELL_WIDTH))
+	self.left:setShape(util.newRectangleShape(CELL_WIDTH, CELL_WIDTH))
+	self.right:setShape(util.newRectangleShape(CELL_WIDTH, CELL_WIDTH))
+
+	self.dir = dir
 	self:setPos(getGridPosInv(i, j))
 	self:setDirection(dir)
 	self.state = "closed"
 
-	if activate then
-		self:activate()
-	end
+	self.dragged = false
+
+	--call this outside
+	-- self:setOccupiedNodes()
+	-- self:setHoles()
+end
+
+function Gate:copy()
+	local gate = Gate:new(self.type, self.i, self.j, self.dir, self.level)
+	return gate
 end
 
 function Gate:activate()
@@ -86,6 +94,24 @@ function Gate:setPos2(i, j)
 	self.i, self.j = i, j
 end
 
+function Gate:setDir(dir)
+	self:setDirection(dir)
+end
+
+function Gate:setDirection(dir)
+	self.dir = dir
+	if dir == "up" then
+		self:setAngle(math.pi)
+	elseif dir == "left" then
+		self:setAngle(math.pi/2)
+	elseif dir == "down" then
+		self:setAngle(0)
+	elseif dir == "right" then
+		self:setAngle(-math.pi/2)
+	end
+	self:updateComponents()
+end
+
 --places the player behind the gate
 --also makes the player fly out of the gate
 function Gate:ejectPlayer(player)
@@ -99,7 +125,7 @@ function Gate:ejectPlayer(player)
 	local v = vtable[self.dir]
 	player:setVel(v[1], v[2])
 	player:setHelpless(0.2)
-	player.afterImageTimer = 1000 --disable after images
+	player.afterImageTimer = 1000 --disable afterimages
 end
 
 function Gate:checkPlayerCollision(player)
@@ -134,6 +160,16 @@ function Gate:update(dt)
 end
 
 function Gate:draw()
+	if self.dragged then
+		self.left.color.a = 0.5
+		self.middle.color.a = 0.5
+		self.right.color.a = 0.5
+	else
+		self.left.color.a = 1
+		self.middle.color.a = 1
+		self.right.color.a = 1
+	end
+
 	self.left:draw()
 	if self.state ~= "open" then
 		self.middle:draw()
@@ -141,15 +177,17 @@ function Gate:draw()
 	self.right:draw()
 end
 
---editor function
+--------------------
+-- EDITOR METHODS --
+--------------------
 function Gate:containMouse()
 	local bbox = {self:bbox()}
-	return util.containPoint(bbox, mouse.x, mouse.y)
+	return util.containPoint(bbox, mouse.cx, mouse.cy)
 end
 
 --returns grid coords that are occupied by this gate
 --if middle is true, get the middle 3 coordinates only
-function Gate:getOccupied(middle)
+function Gate:getOccupiedCoords(middle)
 	local i, j = getGridPos(self:getPos())
 	local t = {}
 	local r = middle and 1 or 2
@@ -165,20 +203,42 @@ function Gate:getOccupied(middle)
 	return t
 end
 
-function Gate:setDir(dir)
-	self:setDirection(dir)
+function Gate:setOccupiedNodes()
+	local occupied = {}
+	local t = self:getOccupiedCoords()
+	local grid = self.level.objectGrid
+
+	for _, v in ipairs(t) do
+		local node = grid[v[1]][v[2]]
+		occupied[node] = true
+	end
+
+	self.occupied = occupied
 end
 
-function Gate:setDirection(dir)
-	self.dir = dir
-	if dir == "up" then
-		self:setAngle(math.pi)
-	elseif dir == "left" then
-		self:setAngle(math.pi/2)
-	elseif dir == "down" then
-		self:setAngle(0)
-	elseif dir == "right" then
-		self:setAngle(-math.pi/2)
+--clears any nodes the gate occupies
+function Gate:clearOccupiedNodes()
+	for node, _ in pairs(self.occupied) do
+		node:clear()
 	end
-	self:updateComponents()
+end
+
+--clear the holes at the previous position
+--and set the current holes
+function Gate:setHoles()
+	--not the most efficient but whatever
+	local gateType = self.type
+	for k, wall in pairs(self.level.walls) do
+		for i, v in pairs(wall.holes) do
+			if v == gateType then
+				wall:setHole(i, i, false)
+			end
+		end
+	end
+
+	local wall = self.level.walls[self.dir]
+	local coords = self:getOccupiedCoords(true)
+	for _, v in ipairs(coords) do
+		wall:setHole(v[1], v[2], self.type)
+	end
 end

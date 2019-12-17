@@ -5,8 +5,6 @@ camera = {}
 --TODO: Fix player aiming
 
 camera.x, camera.y = 0, 0
-camera.oldMouseX = 0
-camera.oldMouseY = 0
 
 function camera:push()
 	love.graphics.push()
