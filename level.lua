@@ -9,7 +9,7 @@ Level = class("Level")
 --Level should be in charge of saving/loading files
 --Level should be able to create all objects for playing
 
-function Level:initialize(grid_w, grid_h)
+function Level:initialize(grid_w, grid_h, no_border)
 	--grid_w is how many cells wide
 	--width is how wide the playable area is in pixels
 	--fullWidth is how wide the level is including walls
@@ -52,12 +52,14 @@ function Level:initialize(grid_w, grid_h)
 	self:initializeGates()
 
 	--initialize a border of blocks
-	for i = 1, self.grid_h do
-		for j = 1, self.grid_w do
-			if (i == 1 or i == self.grid_h) or (j == 1 or j == self.grid_w) then
-				local node = self.objectGrid[i][j]
-				if not self.gates.enter.occupied[node] and not self.gates.exit.occupied[node] then
-					node:setObject("tile", "block")
+	if not no_border then
+		for i = 1, self.grid_h do
+			for j = 1, self.grid_w do
+				if (i == 1 or i == self.grid_h) or (j == 1 or j == self.grid_w) then
+					local node = self.objectGrid[i][j]
+					if not self.gates.enter.occupied[node] and not self.gates.exit.occupied[node] then
+						node:setObject("tile", "block")
+					end
 				end
 			end
 		end
@@ -75,7 +77,7 @@ function Level:initializeWalls()
 end
 
 function Level:initializeGates()
-	local ci = math.floor(self.grid_h / 2)
+	local ci = math.floor(self.grid_h / 2) + 1
 	local gates = {
 		enter = Gate:new("enter", ci, 1, "left", self),
 		exit = Gate:new("exit", ci, self.grid_w, "right", self)
@@ -87,16 +89,114 @@ function Level:initializeGates()
 	self.gates = gates
 end
 
+--these 2 are class functions, not methods
+function Level.save(level, filename)
+	local file = love.filesystem.newFile("levels/"..filename)
+	file:open("w")
 
-function Level:save()
+	local line = function(str)
+		file:write(str.."\n")
+	end
+	local quote = function(str)
+		return "\""..str.."\""
+	end
+
+	line("local levelData = {}")
+	line("levelData.grid_w = "..level.grid_w)
+	line("levelData.grid_h = "..level.grid_h)
+
+	line("levelData.objects = {")
+	for _, n in ipairs(level.allNodes) do
+		if n.object then
+			local s = "\t{"..n.i..", "..n.j..", "..quote(n.objType)..", "..quote(n.object.key)
+			if n.objType == "tile" and n.actuator then
+				s = s..", "..quote(n.actuator).."},"
+			else
+				s = s.."},"
+			end
+			line(s)
+		end
+	end
+	line("}")
+
+	--can be expanded to include holes from all sides of the wall
+	line("levelData.holes = {")
+	local s = "\tdown = {"
+	local dholes = level.walls.down.holes
+	for h, v in pairs(dholes) do
+		if v == "normal" then
+			s = s..h..","
+		end
+	end
+	line(s.."}\n}")
+
+	local en = level.gates.enter
+	local ex = level.gates.exit
+	line("levelData.gates = {")
+	line("\tenter = {"..en.i..", "..en.j..", "..quote(en.dir).."},")
+	line("\texit = {"..ex.i..", "..ex.j..", "..quote(ex.dir).."},")
+	line("}")
+
+	line("return levelData")
+
+	file:close()
 end
 
---this allows playstate and editorstate to have the same load function
-function Level:load()
+--returns a level object or nil if loading failed
+function Level.load(filename, is_default)
+	if is_default then
+		filename = "default_levels/"..filename
+	else
+		filename = "levels/"..filename
+	end
+	local chunk = love.filesystem.load(filename)
+	if not chunk then
+		print("ERROR: File "..filename.." not found!")
+		return nil
+	end
+
+	local levelData = chunk()
+	
+	local level = Level:new(levelData.grid_w, levelData.grid_h, true)
+
+	for _, t in ipairs(levelData.objects) do
+		local i, j = t[1], t[2]
+		local objType = t[3]
+		local object = t[4]
+		local actuator = t[5]
+		local node = level.objectGrid[i][j]
+		node:setObject(objType, object)
+		if actuator then
+			node:setObject("actuator", object)
+		end
+	end
+
+	local dwall = level.walls.down
+	for _, h in ipairs(levelData.holes.down) do
+		dwall:setHole(h, h, "normal")
+	end
+
+	for k, gate in pairs(level.gates) do
+		local t = levelData.gates[k]
+		gate:setPos2(t[1], t[2])
+		gate:setDir(t[3])
+		gate:setOccupiedNodes()
+		gate:setHoles()
+	end
+
+	return level
 end
 
 function Level:boundCheck(i, j)
 	return i >= 1 and i <= self.grid_h and j >= 1 and j <= self.grid_w
+end
+
+function Level:checkOutOfBounds(player)
+	local px, py = player:getPos()
+	local pw, ph = player:getDim()
+	pw, ph = pw/2, ph/2
+	local x0, x1, y0, y1 = self.x0, self.x1, self.y0, self.y1
+	return px+pw < x0 or px-pw > x1 or py+ph < y0 or py-ph > y1
 end
 
 --sets up all of the game objects for playing
@@ -154,11 +254,6 @@ function Level:drawBackground()
 	love.graphics.rectangle("fill", x, y, w, h)
 end
 
-
---Idea:
---	Maybe Level should have the GridNodes instead of editorstate
---TODO: combine self.tile, self.enemy, self.item together into self.object
-
 GridNode = class("GridNode")
 
 -- i, j = row, column
@@ -170,6 +265,7 @@ function GridNode:initialize(level, i, j)
 	self.y = level.inner_y0 + (i-0.5)* CELL_WIDTH
 	self.w, self.h = CELL_WIDTH, CELL_WIDTH
 
+	self.objectType = nil
 	self.object = nil
 	self.actuator = nil
 	self.highlight = false
@@ -179,7 +275,7 @@ function GridNode:setObject(objType, key)
 	if objType == "actuator" then
 		if self.objType == "tile" then
 			self.actuator = key
-			self.actuatorColor = SwitchBlock.colors(key)
+			self.actuatorColor = SwitchBlock.colors[key]
 		end
 	else
 		self.objType = objType

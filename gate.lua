@@ -3,6 +3,9 @@ Gate = class("Gate", Sprite)
 --Gate has 2 types: enter and exit
 --Gates are initially unactivated for use in EditorState
 --Gate consists of 3 sprites, left, middle, right
+
+--TODO: Animate the opening and closing of gates
+
 function Gate:initialize(gateType, i, j, dir, level)
 	self.type = gateType
 	self.level = level

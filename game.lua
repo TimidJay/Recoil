@@ -71,14 +71,8 @@ function game:clearObjects()
 		util.clear(self[str])
 		util.clear(self.newObjects[str])
 	end
-	for k, gate in pairs(self.gates) do
-		gate:reset()
-		self.gates[k] = nil
-	end
-	for k, wall in pairs(self.walls) do
-		wall:reset()
-	end
-	self.exit = nil
+	self.walls = {}
+	self.gates = {}
 end
 
 function game.destructor(obj)

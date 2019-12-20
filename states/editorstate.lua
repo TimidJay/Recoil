@@ -1,5 +1,28 @@
 EditorState = class("EditorState")
 
+--put tileKeys here for ease of access
+local tileKeys = {
+	"block", 
+	"deathblock",
+	"fallingblock",
+	"donutblock",
+	"shootblock",
+	"bounceblock1",
+	"bounceblock2",
+	"laser1",
+	"laser2",
+	"laser3",
+	"laser4",
+	"shield1",
+	"shield2",
+	"shield3",
+	"shield4",
+	"oneway1",
+	"oneway2",
+	"oneway3",
+	"oneway4",
+}
+
 tool = "free"
 
 function EditorState:initialize(level)
@@ -22,18 +45,27 @@ function EditorState:initialize(level)
 	--gui stuff
 	self.frames = {}
 
-	--the default OnClose function deletes the frame
-	--however, I only want to hide the frame
-	local hide = function(obj)
-		obj:SetVisible(false)
-		return false
-	end
+	self:initToolWindow(window.w-110, 290)
+	self:initObjectWindow(window.w-150, 30)
+	self:initSwitchWindow(window.w-400, 30)
+	self:initLevelBrowserWindow(0, 30)
+	self:initResizeWindow(260, 30)
+	self:initMenuButtons()
+end
 
-	--resizing window
+--the default OnClose function deletes the frame
+--however, I only want to hide the frame
+local hide = function(obj)
+	obj:SetVisible(false)
+	return false
+end
+
+function EditorState:initResizeWindow(x, y)
+	local level = self.level
 	local frame = loveframes.Create("frame")
 	frame.OnClose = hide
 	frame:SetName("Resize Level")
-	frame:SetPos(window.w - 500, 300)
+	frame:SetPos(x, y)
 	frame:SetSize(200, 180)
 	frame:SetState("EditorState")
 
@@ -44,6 +76,7 @@ function EditorState:initialize(level)
 	local text1 = loveframes.Create("text", frame)
 	text1:SetText("# of cells wide:")
 	text1:SetPos(30, 40)
+	self.numbox_w = numbox1
 
 	local numbox2 = loveframes.Create("textinput", frame)
 	numbox2:SetPos(125, 70)
@@ -52,6 +85,7 @@ function EditorState:initialize(level)
 	local text2 = loveframes.Create("text", frame)
 	text2:SetText("# of cells high:")
 	text2:SetPos(30, 70)
+	self.numbox_h = numbox2
 
 	local warning = loveframes.Create("text", frame)
 	warning:SetDefaultColor(1, 0, 0, 1)
@@ -71,15 +105,15 @@ function EditorState:initialize(level)
 		self:setLevel(Level:new(w, h))
 	end
 
+	self.frames.resize = frame
+end
 
-	self.frames.rezize = frame
-
-	--tool stuff
+function EditorState:initToolWindow(x, y)
 	local frame = loveframes.Create("frame")
 	frame.OnClose = hide
 	frame:SetName("Tools")
 	-- frame:ShowCloseButton(true)
-	frame:SetPos(window.w - 340, 80)
+	frame:SetPos(x, y)
 	frame:SetWidth(100)
 	frame:SetHeight(150)
 	frame:SetState("EditorState")
@@ -99,13 +133,14 @@ function EditorState:initialize(level)
 	end
 
 	self.frames.tool = frame
+end
 
-	--tile stuff
+function EditorState:initObjectWindow(x, y)
 	local frame = loveframes.Create("frame")
 	frame.OnClose = hide
 	frame:SetName("Tiles")
 	-- frame:ShowCloseButton(false)
-	frame:SetPos(window.w - 220, 80)
+	frame:SetPos(x, y)
 	frame:SetWidth(150)
 	frame:SetHeight(250)
 	frame:SetState("EditorState")
@@ -117,27 +152,6 @@ function EditorState:initialize(level)
 	flist:SetSpacing(5)
 	flist:SetPadding(5)
 
-	local tileKeys = {
-		"block", 
-		"deathblock",
-		"fallingblock",
-		"donutblock",
-		"shootblock",
-		"bounceblock1",
-		"bounceblock2",
-		"laser1",
-		"laser2",
-		"laser3",
-		"laser4",
-		"shield1",
-		"shield2",
-		"shield3",
-		"shield4",
-		"oneway1",
-		"oneway2",
-		"oneway3",
-		"oneway4",
-	}
 	for i, key in ipairs(tileKeys) do
 		local tileData = data.tile[key]
 		local button = loveframes.Create("button", frame)
@@ -172,14 +186,14 @@ function EditorState:initialize(level)
 	flist:AddItem(button)
 
 	self.frames.tile = frame
+end
 
-	--switch stuff
-
+function EditorState:initSwitchWindow(x, y)
 	local frame = loveframes.Create("frame")
 	frame.OnClose = hide
 	frame:SetName("Switch Blocks")
 	-- frame:ShowCloseButton(false)
-	frame:SetPos(window.w - 600, 80)
+	frame:SetPos(x, y)
 	frame:SetWidth(240)
 	frame:SetHeight(180)
 	frame:SetState("EditorState")
@@ -198,15 +212,6 @@ function EditorState:initialize(level)
 	end
 	choice:SetChoice("red")
 	choice.OnChoiceSelected = function(obj, col)
-		--update switch/actuator selection
-		-- if self.selectedActuator then
-		-- 	self.selectedActuator = col
-		-- else
-		-- 	local key = self.selectedTile
-		-- 	if key:sub(1, 6) == "switch" then
-		-- 		self.selectedTile = colors[col]
-		-- 	end
-		-- end
 
 		if self.selectedType == "actuator" then
 			self.selectedValue = col
@@ -244,8 +249,6 @@ function EditorState:initialize(level)
 		end
 	end
 
-	
-
 	local check = loveframes.Create("checkbox", frame)
 	check:SetText("Set Triggered")
 	check:SetPos(110, 120)
@@ -262,12 +265,13 @@ function EditorState:initialize(level)
 	end
 
 	self.frames.switch = frame
+end
 
-	--level bowser / manager
+function EditorState:initLevelBrowserWindow(x, y)
 	local frame = loveframes.Create("frame")
 	frame.OnClose = hide
 	frame:SetName("Level Browser")
-	frame:SetPos(window.w - 900, 80)
+	frame:SetPos(x, y)
 	frame:SetWidth(250)
 	frame:SetHeight(500)
 	frame:SetState("EditorState")
@@ -310,7 +314,7 @@ function EditorState:initialize(level)
 	fileList2:AddColumn("Filename")
 	fileList2.refresh = function(obj)
 		obj:Clear()
-		local filenames = love.filesystem.getDirectoryItems("pushedlevels")
+		local filenames = love.filesystem.getDirectoryItems("default_levels")
 		for _, name in ipairs(filenames) do
 			obj:AddRow(name)
 		end
@@ -323,7 +327,7 @@ function EditorState:initialize(level)
 	end
 
 	tabs:AddTab("Local Levels", panel)
-	tabs:AddTab("Pushed Levels", panel2)
+	tabs:AddTab("Default Levels", panel2)
 
 	local saveButton = loveframes.Create("button", frame)
 	saveButton:SetText("Save")
@@ -348,53 +352,43 @@ function EditorState:initialize(level)
 	end
 
 	self.frames.browser = frame
+end
 
-	--summoning buttons to unhide "closed" frames
+function EditorState:initMenuButtons()
+	self.menuButtons = {}
+	local items = {
+		{"browser", "Save/Load"},
+		{"resize", "Resize Level"},
+		{"tool", "Toolbar"},
+		{"tile", "Objects"},
+		{"switch", "Switches/Actuator"},
+	}
+
+	local x0, y0 = 80, 2
+	local w, h = 120, 20
+	local gap = 10
+
+	for i, v in pairs(items) do
+		local button = loveframes.Create("button")
+		button:SetText(v[2])
+		button:SetPos(x0+(i-1)*(w+gap), y0)
+		button:SetSize(w, h)
+		local frame = self.frames[v[1]]
+		button.OnClick = function(obj, x, y)
+			frame:SetVisible(true)
+		end
+		button:SetState("EditorState")
+		table.insert(self.menuButtons, button)
+	end
 
 	local button = loveframes.Create("button")
-	button:SetText("Tools Window")
-	button:SetPos(80, 0)
-	button:SetSize(100, 20)
-	button.OnClick = function(obj, x, y)
-		self.frames.tool:SetVisible(true)
-	end
-	button:SetState("EditorState")
-
-	local button = loveframes.Create("button")
-	button:SetText("Tiles Window")
-	button:SetPos(190, 0)
-	button:SetSize(100, 20)
-	button.OnClick = function(obj, x, y)
-		self.frames.tile:SetVisible(true)
-	end
-	button:SetState("EditorState")
-
-	local button = loveframes.Create("button")
-	button:SetText("Switches/Actuators")
-	button:SetPos(300, 0)
-	button:SetSize(120, 20)
-	button.OnClick = function(obj, x, y)
-		self.frames.switch:SetVisible(true)
-	end
-	button:SetState("EditorState")
-
-	local button = loveframes.Create("button")
-	button:SetText("Save/Load")
-	button:SetPos(430, 0)
-	button:SetSize(100, 20)
-	button.OnClick = function(obj, x, y)
-		self.frames.browser:SetVisible(true)
-	end
-	button:SetState("EditorState")
-
-	--exit button
-	local buttton = loveframes.Create("button")
 	button:SetText("Main Menu")
-	button:SetPos(window.w - 150, 0)
-	button:SetSize(100, 20)
+	button:SetPos(window.w - 120 - 10, 2)
+	button:SetSize(120, 20)
 	button.OnClick = function(obj, x, y)
 		game:pop()
 	end
+	button:SetState("EditorState")
 end
 
 function EditorState:setLevel(level)
@@ -406,6 +400,13 @@ end
 
 function EditorState:close()
 	editorstate = nil
+
+	for k, frame in pairs(self.frames) do
+		frame:Remove()
+	end
+	for _, butt in ipairs(self.menuButtons) do
+		butt:Remove()
+	end
 end
 
 function EditorState:reset()
@@ -427,11 +428,12 @@ end
 
 --global function for easier access
 function saveLevel(filename)
-	if game:top() ~= editorstate then
-		print("Make sure you're in the Level Editor state!")
-		return
-	end
-	editorstate:saveLevel(filename)
+	-- if game:top() ~= editorstate then
+	-- 	print("Make sure you're in the Level Editor state!")
+	-- 	return
+	-- end
+	-- editorstate:saveLevel(filename)
+	Level.save(editorstate.level, filename)
 end
 
 function EditorState:saveLevel(filename)
@@ -490,15 +492,24 @@ function EditorState:saveLevel(filename)
 	file:close()
 end
 
-function loadLevel(filename, isPushed)
+function loadLevel(filename, is_default)
 	if game:top() ~= editorstate then
 		print("Make sure you're in the Level Editor state!")
 		return
 	end
-	editorstate:loadLevel(filename, isPushed)
+	editorstate:loadLevel(filename, is_default)
 end
 
-function EditorState:loadLevel(filename, isPushed)
+function EditorState:loadLevel(filename, is_default)
+	local level = Level.load(filename, is_default)
+	if level then
+		self:setLevel(level)
+		self.numbox_w:SetText(level.grid_w)
+		self.numbox_h:SetText(level.grid_h)
+	end
+end
+
+function EditorState:loadLevel2(filename, isPushed)
 	local chunk
 	if isPushed then
 		chunk = love.filesystem.load("pushedlevels/"..filename)
@@ -784,7 +795,7 @@ end
 -- switches the game to test mode
 
 function EditorState:startTest()
-	game:push(PlayState:new(self.level))
+	game:push(PlayState:new(self.level, "test"))
 end
 
 function EditorState:startTestOLD()
@@ -833,49 +844,47 @@ function EditorState:startTestOLD()
 end
 
 function EditorState:draw()
-
-	--any HUD elements should be drawn separate from the camera space
+	--any HUD elements should be drawn independent of the camera
 	camera:push()
 
 	self.level:drawBackground()
-
 	for k, w in pairs(self.level.walls) do
 		w:draw()
 	end
-
 	--draw gridnodes (cells)
 	for _, node in ipairs(self.allNodes) do
 		node:draw()
 	end
-
 	for k, g in pairs(self.level.gates) do
 		g:draw()
 	end
 	for _, node in ipairs(self.allNodes) do
 		node:drawHighlight()
 	end
-	--draw proposed pit
-	-- local dwall = game.walls.down
-	-- local cell_w = config.cell_w
-	-- local border_w = config.border_w
-	-- love.graphics.setColor(0, 0, 0, 1)
-	-- for j, v in pairs(self.pit) do
-	-- 	love.graphics.rectangle("fill", border_w + (j-1) * cell_w, dwall.y, cell_w, dwall.h)
-	-- end
-
 	self:drawGridLines()
 
 	camera:pop()
+
+	--draw makeshift menubar
+	love.graphics.setColor(0, 0, 0, 1)
+	love.graphics.rectangle("fill", 0, 0, window.w, 26)
+	love.graphics.setColor(0.9, 0.9, 0.9, 1)
+	love.graphics.rectangle("fill", 0, 0, window.w, 24)
+	--personal fps rectangle
+	love.graphics.setColor(0.5, 0.5, 0.5, 1)
+	love.graphics.rectangle("fill", 2, 2, 60, 20)
 end
 
 --predraw the gridlines to a canvas because drawing dashed lines
 --is really expensive
---Might have to set a level size limit or else the canvas get too big
+--There needs to be a level size limit because certain old gpus
+--do not support extremely large canvases
 function EditorState:initGridLines()
 	local level = self.level
 
 	local canvas = love.graphics.newCanvas(level.fullWidth, level.fullHeight)
 	love.graphics.setCanvas(canvas)
+	love.graphics.origin()
 
 	love.graphics.setColor(0, 0, 0, 1)
 	love.graphics.setLineStyle("rough")
@@ -910,7 +919,13 @@ function EditorState:initGridLines()
 	self.gridLineCanvas = canvas
 end
 
+--need to compensate for fullscreen
 function EditorState:drawGridLines()
+	love.graphics.push()
+	if fullscreen then
+		-- love.graphics.origin()
+	end
 	love.graphics.setColor(1, 1, 1, 1)
 	love.graphics.draw(self.gridLineCanvas)
+	love.graphics.pop()
 end

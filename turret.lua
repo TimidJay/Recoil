@@ -1,5 +1,7 @@
 Turret = class("Turret", Sprite)
 
+--TODO: Give turrets a maximum clip size
+
 local turret_rect = {
 	make_rect(0, 0, 15, 15),
 	make_rect(15, 0, 15, 15)
@@ -93,7 +95,7 @@ function Turret:raycast(x0, y0, dx, dy)
 	local player = playstate.player
 	local shapes = playstate:getRaycastShapes()
 
-	local tmin = math.huge
+	local tmin = 10000
 	for _, shape in ipairs(shapes) do
 		local check, t = shape:intersectsRay(x0, y0, dx, dy)
 		if check and t > 0 and t < tmin then

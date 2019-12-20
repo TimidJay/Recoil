@@ -1,13 +1,13 @@
 PlayState = class("PlayState")
 
-function PlayState:initialize(level)
+function PlayState:initialize(level, mode)
 	playstate = self
 
 	self.level = level
 
 	self.className = "PlayState"
 
-	self.mode = "play"
+	self.mode = mode
 	self.state = "playing" --playing, death, victory
 
 	--initialize all the objects
@@ -34,6 +34,8 @@ function PlayState:close()
 end
 
 function PlayState:restart()
+	game:pop()
+	game:push(PlayState:new(self.level, self.mode))
 end
 
 --should only be called on play mode
@@ -139,7 +141,9 @@ function PlayState:getRaycastShapes()
 		end
 	end
 	for _, w in pairs(game.walls) do
-		table.insert(shapes, w.shape)
+		for _, shape in ipairs(w.shapes) do
+			table.insert(shapes, shape)
+		end
 	end
 	for _, gate in pairs(game.gates) do
 		for _, s in ipairs(gate:getShapes()) do
@@ -266,43 +270,36 @@ function PlayState:update(dt)
 	-- 	self.state = "death"
 	-- end
 
-	local check, dir = false, nil
-	if px+pw < 0 and pvx < 0 then
-		check = true
-		dir = "left"
-	elseif px-pw > window.w and pvx > 0 then
-		check = true
-		dir = "right"
-	elseif py+ph < 0 and pvy < 0 then
-		check = true
-		dir = "up"
-	elseif py-ph > window.h and pvy > 0 then
-		check = true
-		dir = "down"
+	if self.level:checkOutOfBounds(player) then
+		self.state = "death"
+		local pi, pj = getGridPos(px, py)
+		local exit = game.gates.exit
+		local coords = exit:getOccupiedCoords(true)
+		local dir = exit.dir
+		if dir == "up" or dir == "down" then
+			local up = (pi <= coords[1][1])
+			local down = (pi >= coords[1][1])
+			if (dir == "up" and up) or (dir == "down" and down) then
+				if pj >= coords[1][2] and pj <= coords[3][2] then
+					self.state = "victory"
+					if self.mode == "play" then
+						levelselectstate:beatLevel(self.currentLevel)
+					end
+				end
+			end
+		else
+			local left = (pj <= coords[1][2])
+			local right = (pj >= coords[1][2])
+			if (dir == "left" and left) or (dir == "right" and right) then
+				if pi >= coords[1][1] and pi <= coords[3][1] then
+					self.state = "victory"
+					if self.mode == "play" then
+						levelselectstate:beatLevel(self.currentLevel)
+					end
+				end
+			end
+		end
 	end
-
-	-- if check then
-	-- 	self.state = "death"
-	-- 	if dir == game.exit.dir then
-	-- 		local pi, pj = getGridPos(px, py)
-	-- 		local coords = game.exit.coords
-	-- 		if dir == "up" or dir == "down" then
-	-- 			if pj >= coords[1][2] and pj <= coords[3][2] then
-	-- 				self.state = "victory"
-	-- 				if self.mode == "play" then
-	-- 					levelselectstate:beatLevel(self.currentLevel)
-	-- 				end
-	-- 			end
-	-- 		else
-	-- 			if pi >= coords[1][1] and pi <= coords[3][1] then
-	-- 				self.state = "victory"
-	-- 				if self.mode == "play" then
-	-- 					levelselectstate:beatLevel(self.currentLevel)
-	-- 				end
-	-- 			end
-	-- 		end
-	-- 	end
-	-- end
 
 	--collision stuff
 	player.touchingGround = false
@@ -379,13 +376,6 @@ function PlayState:update(dt)
 end
 
 function PlayState:draw()
-	-- love.graphics.setColor(0.5, 0.5, 0.5, 1)
-	-- local rec = love.graphics.rectangle
-	-- rec("fill" , 0, config.floor, window.w, config.border_w) --floor
-	-- rec("fill" , 0, 0, window.w, config.border_w) --ceiling
-	-- rec("fill" , 0, 0, config.border_w, window.h) --left wall
-	-- rec("fill" , config.wall_r, 0, config.border_w, window.h) --right wall
-	-- love.graphics.setColor(1, 1, 1, 1)
 
 	camera:push()
 

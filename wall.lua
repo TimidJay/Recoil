@@ -30,14 +30,8 @@ function Wall:initialize(dir, x0, x1, y0, y1, level)
 
 	self.holes = {}
 	if dir == "up" or dir == "down" then
-		-- for i = 1, level.grid_w do
-		-- 	self.holes[i] = false
-		-- end
 		self.maxHoles = level.grid_w
 	else
-		-- for i = 1, level.grid_h do
-		-- 	self.holes[i] = false
-		-- end
 		self.maxHoles = level.grid_h
 	end
 
@@ -45,7 +39,6 @@ function Wall:initialize(dir, x0, x1, y0, y1, level)
 	self.shapes = {}
 end
 
---TODO: Add pits (0)
 function Wall:copy()
 	local wall = Wall:new(self.dir, self.x0, self.x1, self.y0, self.y1, self.level)
 	for k, v in pairs(self.holes) do

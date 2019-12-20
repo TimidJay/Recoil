@@ -13,10 +13,10 @@ function MainMenuState:initialize()
 	self.className = "MainMenuState"
 	local cx, cy = window.w/2, window.h/2
 
-	local playButton = make_button("Play", cx - 200, cy + 200, 100, 30)
-	playButton.OnClick = function(obj, x, y)
-		game:push(LevelSelectState:new())
-	end
+	-- local playButton = make_button("Play", cx - 200, cy + 200, 100, 30)
+	-- playButton.OnClick = function(obj, x, y)
+	-- 	game:push(LevelSelectState:new())
+	-- end
 	
 	local editButton = make_button("Level Editor", cx - 200, cy + 240, 100, 30)
 	editButton.OnClick = function(obj, x, y)
@@ -35,17 +35,6 @@ function MainMenuState:initialize()
 	local controlButton = make_button("Controls", cx + 240, cy + 240, 100, 30)
 	controlButton.OnClick = function(obj, x, y)
 		self:showControlsWindow()
-	end
-
-	local testButton = make_button("TEST", cx , cy + 200, 100, 30)
-	testButton.OnClick = function(obj, x, y)
-		local level = Level:new()
-		game.walls = level:createWalls()
-		for _, w in pairs(game.walls) do
-			w:createShapes()
-		end
-		local ps = PlayState2:new(level)
-		game:push(ps)
 	end
 end
 

@@ -268,8 +268,8 @@ function love.draw()
 	-- love.graphics.rectangle("fill", 0, 0, window.w, window.h)
 	game:draw()
 
-	love.graphics.setColor(0, 0, 0, 1)
-	love.graphics.print("FPS: "..tostring(love.timer.getFPS( )), 12, 12)
+	love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.print("FPS: "..tostring(love.timer.getFPS( )), 4, 4)
 
 	loveframes.draw()
 	console.draw()

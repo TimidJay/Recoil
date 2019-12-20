@@ -331,7 +331,68 @@ end
 	- func: DrawImageButton(object)
 	- desc: draws the image button object
 --]]---------------------------------------------------------
+
+--new version now can scale
 function skin.imagebutton(object)
+
+	local skin = object:GetSkin()
+	local x = object:GetX()
+	local y = object:GetY()
+	local width = object:GetWidth()
+	local height = object:GetHeight()
+	local text = object:GetText()
+	local hover = object:GetHover()
+	local image = object:GetImage()
+	local imagecolor = object.imagecolor or skin.controls.color_image
+	local down = object.down
+	local font = skin.controls.smallfont
+	local twidth = font:getWidth(object.text)
+	local theight = font:getHeight(object.text)
+	local checked = object.checked
+	
+	local fore1, fore2 = skin.controls.color_back0
+
+	if down then
+		if image then
+			love.graphics.setColor(imagecolor)
+			love.graphics.draw(image, x + 1, y + 1)
+		end
+		love.graphics.setFont(font)
+		love.graphics.setColor(skin.controls.color_back2)
+		skin.PrintText(text, x + width/2 - twidth/2 + 1, y + height - theight - 5 + 1)
+		love.graphics.setColor(skin.controls.color_fore3)
+		skin.PrintText(text, x + width/2 - twidth/2 + 1, y + height - theight - 6 + 1)
+	elseif hover then
+		if image then
+			love.graphics.setColor(imagecolor)
+			love.graphics.draw(image, x, y)
+		end
+		love.graphics.setFont(font)
+		love.graphics.setColor(skin.controls.color_back1)
+		skin.PrintText(text, x + width/2 - twidth/2, y + height - theight - 5)
+		love.graphics.setColor(skin.controls.color_fore2)
+		skin.PrintText(text, x + width/2 - twidth/2, y + height - theight - 6)
+	else
+		if image then
+			love.graphics.setColor(imagecolor)
+			love.graphics.draw(image, x, y)
+		end
+		love.graphics.setFont(font)
+		love.graphics.setColor(skin.controls.color_back0)
+		skin.PrintText(text, x + width/2 - twidth/2, y + height - theight - 5)
+		love.graphics.setColor(skin.controls.color_fore0)
+		skin.PrintText(text, x + width/2 - twidth/2, y + height - theight - 6)
+	end
+	if checked == true then
+		love.graphics.setColor(skin.controls.color_back2)
+		love.graphics.setLineWidth(3)
+		love.graphics.setLineStyle("smooth")
+		love.graphics.rectangle("line", x+1, y+1, width-2, height-2)
+	end
+
+end
+
+function skin.imagebuttonOLD(object)
 
 	local skin = object:GetSkin()
 	local x = object:GetX()

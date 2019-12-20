@@ -312,7 +312,7 @@ function Gun:fire()
 
 	--do the raycast
 	local hit = false
-	local tmin = math.huge
+	local tmin = 10000
 	local hitShape = nil
 	for _, shape in ipairs(shapes) do
 		local check, t = shape:intersectsRay(mp.x, mp.y, dx, dy)
@@ -323,10 +323,6 @@ function Gun:fire()
 		end
 	end
 
-	--arbitrary tmin length if the raycast didn't hit anythin g
-	if not hit then
-		tmin = 10000 --longer than most monitors
-	end
 	local tx, ty = mp.x + dx*tmin, mp.y + dy*tmin --shot location
 	--the raycast should always hit something since the player is in an enclosed room
 
