@@ -2,8 +2,6 @@ camera = {}
 
 --Camera is a singleton
 
---TODO: Fix player aiming
-
 camera.x, camera.y = 0, 0
 
 function camera:push()

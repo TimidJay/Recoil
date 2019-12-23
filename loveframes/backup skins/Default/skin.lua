@@ -343,11 +343,6 @@ function skin.imagebutton(object)
 	local text = object:GetText()
 	local hover = object:GetHover()
 	local image = object:GetImage()
-	local imgstr = object.imgstr
-	local rect = object.rect
-	local scale = object.scale or 1
-	local angle = object.deg or 0
-	local offx, offy = object.offx or 0, object.offy or 0
 	local imagecolor = object.imagecolor or skin.controls.color_image
 	local down = object.down
 	local font = skin.controls.smallfont
@@ -357,12 +352,10 @@ function skin.imagebutton(object)
 	
 	local fore1, fore2 = skin.controls.color_back0
 
-	angle = math.rad(angle)
-
 	if down then
-		if imgstr then
+		if image then
 			love.graphics.setColor(imagecolor)
-			draw2(imgstr, rect, x+1+offx, y+1+offy, angle, scale, scale)
+			love.graphics.draw(image, x + 1, y + 1)
 		end
 		love.graphics.setFont(font)
 		love.graphics.setColor(skin.controls.color_back2)
@@ -370,9 +363,9 @@ function skin.imagebutton(object)
 		love.graphics.setColor(skin.controls.color_fore3)
 		skin.PrintText(text, x + width/2 - twidth/2 + 1, y + height - theight - 6 + 1)
 	elseif hover then
-		if imgstr then
+		if image then
 			love.graphics.setColor(imagecolor)
-			draw2(imgstr, rect, x+offx, y+offy, angle, scale, scale)
+			love.graphics.draw(image, x, y)
 		end
 		love.graphics.setFont(font)
 		love.graphics.setColor(skin.controls.color_back1)
@@ -380,9 +373,9 @@ function skin.imagebutton(object)
 		love.graphics.setColor(skin.controls.color_fore2)
 		skin.PrintText(text, x + width/2 - twidth/2, y + height - theight - 6)
 	else
-		if imgstr then
+		if image then
 			love.graphics.setColor(imagecolor)
-			draw2(imgstr, rect, x+offx, y+offy, angle, scale, scale)
+			love.graphics.draw(image, x, y)
 		end
 		love.graphics.setFont(font)
 		love.graphics.setColor(skin.controls.color_back0)
@@ -394,12 +387,6 @@ function skin.imagebutton(object)
 		love.graphics.setColor(skin.controls.color_back2)
 		love.graphics.setLineWidth(3)
 		love.graphics.setLineStyle("smooth")
-		love.graphics.rectangle("line", x+1, y+1, width-2, height-2)
-	end
-	if object.highlight then
-		love.graphics.setColor(1, 1, 0, 1)
-		love.graphics.setLineWidth(3)
-		love.graphics.setLineStyle("rough")
 		love.graphics.rectangle("line", x+1, y+1, width-2, height-2)
 	end
 

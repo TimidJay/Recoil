@@ -412,6 +412,7 @@ function PlayState:draw()
 	
 	camera:pop()
 
+	love.graphics.setColor(1, 1, 1, 1)
 	if self.state == "death" then
 		draw("red_x", nil, window.w/2, window.h/2)
 	elseif self.state == "victory" then

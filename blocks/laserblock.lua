@@ -23,11 +23,13 @@ end
 --scan the blocks in front of the laserblock to
 --determine when the laser should stop
 function LaserBlock:fireLaser()
+	local level = playstate.level
+
 	local i, j = self.i, self.j
 	local di, dj = self.di, self.dj
 	i, j = i + di, j + dj
 
-	while boundCheck(i, j) do
+	while level:boundCheck(i, j) do
 		for _, tile in ipairs(playstate.tileGrid[i][j]) do
 			if tile.tangible then
 				--self.stop is a scalar that represents length of laser

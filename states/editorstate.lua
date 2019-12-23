@@ -1,28 +1,5 @@
 EditorState = class("EditorState")
 
---put tileKeys here for ease of access
-local tileKeys = {
-	"block", 
-	"deathblock",
-	"fallingblock",
-	"donutblock",
-	"shootblock",
-	"bounceblock1",
-	"bounceblock2",
-	"laser1",
-	"laser2",
-	"laser3",
-	"laser4",
-	"shield1",
-	"shield2",
-	"shield3",
-	"shield4",
-	"oneway1",
-	"oneway2",
-	"oneway3",
-	"oneway4",
-}
-
 tool = "free"
 
 function EditorState:initialize(level)
@@ -46,8 +23,8 @@ function EditorState:initialize(level)
 	self.frames = {}
 
 	self:initToolWindow(window.w-110, 290)
-	self:initObjectWindow(window.w-150, 30)
-	self:initSwitchWindow(window.w-400, 30)
+	self:initObjectWindow(window.w-165, 30)
+	self:initSwitchWindow(window.w-415, 30)
 	self:initLevelBrowserWindow(0, 30)
 	self:initResizeWindow(260, 30)
 	self:initMenuButtons()
@@ -135,55 +112,111 @@ function EditorState:initToolWindow(x, y)
 	self.frames.tool = frame
 end
 
+local objKeys = {
+	"block", 
+	"block2", 
+	"block3", 
+	"block4", 
+	"deathblock",
+	"fallingblock",
+	"donutblock",
+	"shootblock",
+	"bounceblock1",
+	"bounceblock2",
+	"", --add some padding to align the buttons
+	"",
+	"laser1",
+	"laser2",
+	"laser3",
+	"laser4",
+	"shield1",
+	"shield2",
+	"shield3",
+	"shield4",
+	"oneway1",
+	"oneway2",
+	"oneway3",
+	"oneway4",
+	"turret1",
+	"turret2",
+	"turret3",
+	"turret4",
+	"ammo"
+}
+
 function EditorState:initObjectWindow(x, y)
 	local frame = loveframes.Create("frame")
 	frame.OnClose = hide
 	frame:SetName("Tiles")
 	-- frame:ShowCloseButton(false)
 	frame:SetPos(x, y)
-	frame:SetWidth(150)
+	frame:SetWidth(160)
 	frame:SetHeight(250)
 	frame:SetState("EditorState")
 
-	local flist = loveframes.Create("list", frame)
-	flist:SetPos(10, 40)
-	flist:SetWidth(120)
-	flist:SetHeight(200)
-	flist:SetSpacing(5)
-	flist:SetPadding(5)
+	local list = loveframes.Create("list", frame)
+	list:SetPos(5, 30)
+	list:SetSize(150, 210)
 
-	for i, key in ipairs(tileKeys) do
-		local tileData = data.tile[key]
-		local button = loveframes.Create("button", frame)
-		button:SetText(tileData.editor.name)
-		button.OnClick = function(obj, x, y)
-			-- self.selectedTile = key
-			-- self.selectedActuator = nil
+	--panel should be tall enough to contain all the buttons
+	local panel = loveframes.Create("panel", frame)
+	panel:SetPos(5, 30)
+	panel:SetSize(0, 500)
+	panel:SetState("EditorState")
+	list:AddItem(panel)
 
-			self:select("tile", key)
+	local x0, y0 = 5, 5
+	local w = 30
+	local gridCoord = function(i, j)
+		return x0 + (w * (j-1)), y0 + (w * (i-1))
+	end
+
+	self.objectButtons = {}
+
+	for index, key in ipairs(objKeys) do
+		local objData = data.objects[key]
+		if objData then
+			local objType = objData.type
+			local ed = objData.editor
+
+			local i = math.floor((index-1) / 4) + 1
+			local j = ((index-1) % 4) + 1
+			local button = loveframes.Create("imagebutton", panel)
+			button:SetText("")
+			button:SetPos(gridCoord(i, j))
+			button:SetSize(30, 30)
+			button.imgstr = ed.imgstr
+			button.rect = ed.rect
+			button.scale = 2
+			button.deg = ed.deg
+			if key == "ammo" then button.scale = 1 end
+			button.offx = 15
+			button.offy = 15
+
+			button.OnClick = function(obj, x, y)
+				self:select(objType, key)
+				obj.highlight = true
+				for _, b in ipairs(self.objectButtons) do
+					if b ~= obj then
+						b.highlight = false 
+					end
+				end
+			end
+			table.insert(self.objectButtons, button)
+
+			--these tooltips are causing problems
+			--they interfere with the cursor hovering
+			local tooltip = loveframes.Create("tooltip")
+			tooltip:SetObject(button)
+			tooltip:SetText(ed.name)
+			-- tooltip:SetFollowCursor(false)
+			-- tooltip:SetFollowObject(true)
+			tooltip:SetState("EditorState")
 		end
-		flist:AddItem(button)
 	end
 
-	--temorary turret buttons
-	for i = 1, 4 do
-		local key = "turret"..i
-		local enemyData = data.enemy[key]
-		local button = loveframes.Create("button", frame)
-		button:SetText(enemyData.editor.name)
-		button.OnClick = function(obj, x, y)
-			self:select("enemy", key)
-		end
-		flist:AddItem(button)
-	end
-
-	local button = loveframes.Create("button", frame)
-	local itemData = data.item["ammo"]
-	button:SetText(itemData.editor.name)
-	button.OnClick = function(obj, x, y)
-		self:select("item", "ammo")
-	end
-	flist:AddItem(button)
+	self.objectButtons[1].highlight = true
+	
 
 	self.frames.tile = frame
 end
@@ -436,62 +469,6 @@ function saveLevel(filename)
 	Level.save(editorstate.level, filename)
 end
 
-function EditorState:saveLevel(filename)
-	local tableToString = util.tableToString
-	local join = util.join
-
-	local file = love.filesystem.newFile("levels/"..filename)
-	file:open("w")
-	file:write("local level = {}\n")
-
-	file:write("level.tiles = {\n")
-	for _, n in ipairs(self.allNodes) do
-		if n.tile then
-			local line = "\t{"..n.i..", "..n.j..", \""..n.tile.key.."\""
-			if n.actuator then
-				line = line..", \""..n.actuator.."\""
-			end
-			line = line.."},\n"
-			file:write(line)
-		end
-	end
-	file:write("}\n")
-
-	file:write("level.enemies = {\n")
-	for _, n in ipairs(self.allNodes) do
-		if n.enemy then
-			local line = "\t{"..n.i..", "..n.j..", \""..n.enemy.key.."\"},\n"
-			file:write(line)
-		end
-	end
-	file:write("}\n")
-
-	file:write("level.items = {\n")
-	for _, n in ipairs(self.allNodes) do
-		if n.item then
-			local line = "\t{"..n.i..", "..n.j..", \""..n.item.key.."\"},\n"
-			file:write(line)
-		end
-	end
-	file:write("}\n")
-
-	local enter, exit = self.gates.enter, self.gates.exit
-	file:write("level.gates = {\n")
-	file:write("\tenter = {"..enter.i..", "..enter.j..", \""..enter.dir.."\"},\n")
-	file:write("\texit = {"..exit.i..", "..exit.j..", \""..exit.dir.."\"},\n")
-	file:write("}\n")
-
-	--exported format is a list of keys
-	file:write("level.pit = {")
-	for j, _ in pairs(self.pit) do
-		file:write(j..", ")
-	end
-	file:write("}\n")
-
-	file:write("return level")
-	file:close()
-end
-
 function loadLevel(filename, is_default)
 	if game:top() ~= editorstate then
 		print("Make sure you're in the Level Editor state!")
@@ -506,54 +483,6 @@ function EditorState:loadLevel(filename, is_default)
 		self:setLevel(level)
 		self.numbox_w:SetText(level.grid_w)
 		self.numbox_h:SetText(level.grid_h)
-	end
-end
-
-function EditorState:loadLevel2(filename, isPushed)
-	local chunk
-	if isPushed then
-		chunk = love.filesystem.load("pushedlevels/"..filename)
-	else
-		chunk = love.filesystem.load("levels/"..filename)
-	end
-	if not chunk then
-		print("ERROR: File "..filename.." not found!")
-		return
-	end
-	self:reset()
-	local level = chunk()
-	for _, t in ipairs(level.tiles) do
-		local i, j = t[1], t[2]
-		local key = t[3]
-		local actuator = t[4]
-		local node = self.grid[i][j]
-		node:setTile(key)
-		node:setActuator(actuator)
-	end
-	if level.enemies then
-		for _, t in ipairs(level.enemies) do
-			local i, j = t[1], t[2]
-			local key = t[3]
-			local node = self.grid[i][j]
-			node:setEnemy(key)
-		end
-	end
-	if level.items then
-		for _, t in ipairs(level.items) do
-			local i, j = t[1], t[2]
-			local key = t[3]
-			local node = self.grid[i][j]
-			node:setItem(key)
-		end
-	end
-	for k, gate in pairs(self.gates) do
-		local t = level.gates[k]
-		gate:setPos2(t[1], t[2])
-		gate:setDir(t[3])
-	end
-	self:setOverlap()
-	for _, v in ipairs(level.pit) do
-		self.pit[v] = true
 	end
 end
 
@@ -688,6 +617,7 @@ function EditorState:update(dt)
 			gate:setHoles()
 		end
 	--tool usage
+	--TODO: Add copy/paste for easier level resizing
 	elseif self.level:boundCheck(mi, mj) then
 		if tool == "free" then
 			local node = grid[mi][mj]
@@ -796,51 +726,6 @@ end
 
 function EditorState:startTest()
 	game:push(PlayState:new(self.level, "test"))
-end
-
-function EditorState:startTestOLD()
-	for _, n in ipairs(self.allNodes) do
-		if not self.overlap[n.i][n.j] then
-			if n.tile then
-				table.insert(game.tiles, n:makeTile())
-			elseif n.enemy then
-				table.insert(game.enemies, n:makeEnemy())
-			elseif n.item then
-				table.insert(game.items, n:makeItem())
-			end
-		end
-	end
-
-	game.gates.enter = self.gates.enter
-	game.gates.exit = self.gates.exit
-	game.gates.enter:activate()
-	game.gates.exit:activate()
-
-	--add the holes
-	for j, v in pairs(self.pit) do
-		game.walls.down:setHole(0, j, true)
-	end
-
-	for _, gate in pairs(game.gates) do
-		local holes = gate:getOccupiedCoords(true)
-		local wall = game.walls[gate.dir]
-		for _, t in ipairs(holes) do
-			wall:setHole(t[1], t[2], true)
-		end
-	end
-
-	for _, wall in pairs(game.walls) do
-		wall:createShapes()
-	end
-
-	--set the exit point
-	local exit = self.gates.exit
-	game.exit = {
-		dir = exit.dir,
-		coords = exit:getOccupiedCoords(true)
-	}
-
-	game:push(PlayState:new("test"))
 end
 
 function EditorState:draw()

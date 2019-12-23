@@ -242,27 +242,34 @@ function Gun:initialize(player)
 	Sprite.initialize(self, "gun", nil, 76, 26)
 	self.player = player
 	self:setPos(player:getPos())
-	self.muzzleOffset = {dx = 37, dy = -2}
+	self.muzzleDistance = 40
 	self.muzzlePoint = {x = 0, y = 0} --to be initialized
-	self:setMuzzlePoint()
+	self.aimVector = {dx = 0, dy = 0} --vector should be normalized
+	self:setAim()
 	self.cooldown = 0
 
+	self.maxAmmo = 1
+	self.ammo = self.maxAmmo
 	self.state = "ready" --ready, empty, reloading
 	self.reloadTimer = 0
 end
 
-function Gun:setMuzzlePoint()
-	local mo = self.muzzleOffset
+function Gun:setAim()
+	local off = self.muzzleDistance
 	local mp = self.muzzlePoint
-	local dx, dy = mo.dx, mo.dy
-	if self.flip then dy = -dy end
-	dx, dy = util.rotateVec2(dx, dy, self.angle)
-	mp.x = self.x + dx
-	mp.y = self.y + dy
+	local aim = self.aimVector
+
+	local x, y = self:getPos()
+	local mx, my = mouse.cx, mouse.cy
+	local dx, dy = mx - x, my - y
+	dx, dy = util.normalize(dx, dy)
+
+	mp.x, mp.y = x + dx * off, y + dy * off
+	aim.dx, aim.dy = dx, dy
 end
 
 function Gun:canFire()
-	if self.player.helpless then return false end
+	-- if self.player.helpless then return false end
 	if self.state ~= "ready" then return false end
 	if mouse.m1 ~= 1 then return false end
 	return true
@@ -273,15 +280,15 @@ function Gun:fire()
 	playSound("m1_shot")
 	-- playSound("shoot")
 
-	self.state = "empty"
-	love.mouse.setCursor(cursors.empty)
+	self.ammo = self.ammo - 1
+	if self.ammo == 0 then
+		self.state = "empty"
+		love.mouse.setCursor(cursors.empty)
+	end
 
 	local mp = self.muzzlePoint
-	local dx, dy = mouse.cx - mp.x, mouse.cy - mp.y
-	dx, dy = util.normalize(dx, dy)
-	if mouse.m2 then
-		dx, dy = -dx, -dy
-	end
+	local aim = self.aimVector
+	local dx, dy = aim.dx, aim.dy
 
 	--get all the collision shapes first
 	--could make a function out of this
@@ -291,7 +298,7 @@ function Gun:fire()
 	--check for obstruction
 	--obstruction occurs when there is an object in between the player's center and muzzle point.
 	--if there is an obstruction, then the gun is most likely stuck inside the wall, so it should not fire.
-	--or at least not fire a bullet
+	--the recoil effect should still occur
 	local obstructed = false
 	local px, py = self.player:getPos()
 	for _, shape in ipairs(shapes) do
@@ -582,7 +589,7 @@ function Gun:update(dt)
 	self.flip = deg > 90 or deg < -90
 	
 	self:setPos(self.player:getPos())
-	self:setMuzzlePoint()
+	self:setAim()
 
 	if self.state == "empty" then
 		if not self.player.helpless and self.player.touchingGround then
@@ -593,6 +600,7 @@ function Gun:update(dt)
 	elseif self.state == "reloading" then
 		self.reloadTimer = self.reloadTimer - dt
 		if self.reloadTimer <= 0 then
+			self.ammo = self.maxAmmo
 			self.state = "ready"
 			love.mouse.setCursor(cursors.ready)
 			self:ejectCasing()
@@ -617,9 +625,20 @@ end
 
 function Gun:draw()
 	Sprite.draw(self, false, self.flip)
-	--show the muzzle point for debug
-	-- love.graphics.setColor(1, 0, 0, 1)
+
+	--draw muzzle point and aiming vector for debug
+
+	-- love.graphics.setColor(0, 1, 0, 1)
 	-- local mp = self.muzzlePoint
 	-- love.graphics.circle("fill", mp.x, mp.y, 2)
+
+	-- local x, y = self:getPos()
+	-- local mx, my = mouse.cx, mouse.cy
+	-- local dx, dy = mx - x, my - y
+
+	-- love.graphics.setColor(1, 0, 0, 1)
+	-- love.graphics.setLineWidth(1)
+	-- love.graphics.setLineStyle("rough")
+	-- love.graphics.line(x, y, mx + dx * 100, my + dy * 100)
 end
 

@@ -4,9 +4,20 @@ Block = class("Block", Sprite)
 
 --NOTE: Block takes grid coordinates i, j instead of pixel coords x, y
 --Unlike other objects, Blocks and other tiles should remain static and grid-aligned
-function Block:initialize(i, j)
-	local imgstr = "brick"
-	local rect = nil
+
+--{imgstr, rect}
+local variants = {
+	{"brick", nil},
+	{"brick2", nil},
+	{"brick3", nil},
+	{"brick4", nil}
+}
+
+function Block:initialize(i, j, n)
+	n = n or 1
+	local t = variants[n]
+	local imgstr, rect = t[1], t[2]
+
 	local x = WALL_WIDTH + (j-0.5)*CELL_WIDTH
 	local y = WALL_WIDTH + (i-0.5)*CELL_WIDTH
 	Sprite.initialize(self, imgstr, rect, 30, 30, x, y)

@@ -14,31 +14,12 @@ window = {
 	h = 800
 }
 
---TODO: use these constants instead of config.cell_w
+--globals
 CELL_WIDTH = 30
 CELL_HEIGHT = CELL_WIDTH
 
 --how thick the wall should be
 WALL_WIDTH = CELL_WIDTH * 2
-
---list of various constants
---these will be used all over the place so its better to have them here
--- config = {
--- 	border_w = 25, --how thick should the border wall be
--- 	cell_w = 30, --each cell is a square
--- 	grid_w = 41, --how many cells wide
--- 	grid_h = 25 --how many cells tall
--- }
---aliases
--- config.cell_h = config.cell_w
--- config.rows = config.grid_h
--- config.cols = config.grid_w
--- --derived constants
--- config.floor = window.h - config.border_w
--- config.wall_l = config.border_w
--- config.wall_r = window.w - config.border_w
--- config.ceil = config.border_w
--- config.ceiling = config.ceil
 
 local super_print = print
 

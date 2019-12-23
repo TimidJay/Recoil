@@ -86,9 +86,15 @@ function newobject:update(dt)
 		local ostate = object.state
 		if ostate ~= state then
 			self.visible = false
+			--move this tooltip out of the way if not visible
+			--so it doesn't interfere with the hovering of other objects
+			self:SetPos(-10000, -10000)
+			textobject:SetPos(-10000, -10000)
 			return
 		end
 		self.visible = ohover
+		self:SetPos(-10000, -10000)
+		textobject:SetPos(-10000, -10000)
 		if ohover then
 			local top = self:IsTopInternal()
 			local followcursor = self.followcursor
